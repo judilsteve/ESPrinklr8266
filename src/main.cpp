@@ -1,36 +1,110 @@
 #include <ESP8266React.h>
-#include <LightMqttSettingsService.h>
-#include <LightStateService.h>
+#include <ScheduleService.h>
+#include <time.h>
 
 #define SERIAL_BAUD_RATE 115200
 
 AsyncWebServer server(80);
 ESP8266React esp8266React(&server);
-LightMqttSettingsService lightMqttSettingsService =
-    LightMqttSettingsService(&server, esp8266React.getFS(), esp8266React.getSecurityManager());
-LightStateService lightStateService = LightStateService(&server,
-                                                        esp8266React.getSecurityManager(),
-                                                        esp8266React.getMqttClient(),
-                                                        &lightMqttSettingsService);
+ScheduleService scheduleService = ScheduleService(&server, esp8266React.getSecurityManager(), esp8266React.getFS());
 
 void setup() {
-  // start serial and filesystem
-  Serial.begin(SERIAL_BAUD_RATE);
+    // start serial and filesystem
+    Serial.begin(SERIAL_BAUD_RATE);
 
-  // start the framework and demo project
-  esp8266React.begin();
+    // start the framework and demo project
+    esp8266React.begin();
 
-  // load the initial light settings
-  lightStateService.begin();
+    // load the initial schedule settings
+    scheduleService.begin();
 
-  // start the light service
-  lightMqttSettingsService.begin();
-
-  // start the server
-  server.begin();
+    // start the server
+    server.begin();
 }
 
+#define SECONDS_BETWEEN_STATIONS 10;
+
+int getScheduledActiveStationPin(Schedule const & schedule, int const secondsAfterMidnight) {
+    auto const actualSecondsIntoRun = secondsAfterMidnight - (int)schedule.StartOffsetFromMidnightSeconds;
+    if (actualSecondsIntoRun < 0) {
+        return -1;
+    }
+
+    auto testSecondsIntoRun = 0;
+    auto const stationCount = schedule.Stations.size();
+    for (auto i = 0; i < stationCount; i++) {
+        auto & const testStation = schedule.Stations[i];
+        testSecondsIntoRun += testStation.DurationSeconds;
+        if(actualSecondsIntoRun < testSecondsIntoRun) {
+            return testStation.Pin;
+        }
+        if (i != stationCount - 1) {
+            testSecondsIntoRun += SECONDS_BETWEEN_STATIONS;
+            if(actualSecondsIntoRun < testSecondsIntoRun) {
+                return -1;
+            }
+        }
+    }
+
+    return -1;
+}
+
+int getActiveStationPin(Schedule const & schedule) {
+    // Test mode
+    auto const testStationPin = schedule.TestStationPin;
+    if(testStationPin != -1) {
+        return testStationPin;
+    }
+
+    // Manual run mode
+    auto const unixTime = time(nullptr);
+    if(schedule.ManualStartTime < unixTime) {
+        // TODO_JU manual run logic
+    }
+
+    // Temporary disable (rain mode)
+    if(schedule.DisableUntil > unixTime) {
+        return -1;
+    }
+
+    // Check day of week
+    auto const localTime = localtime(&unixTime);
+    bool scheduledToday;
+    switch(localTime->tm_wday) {
+        case 0: scheduledToday = schedule.Sunday; break;
+        case 1: scheduledToday = schedule.Monday; break;
+        case 2: scheduledToday = schedule.Tuesday; break;
+        case 3: scheduledToday = schedule.Wednesday; break;
+        case 4: scheduledToday = schedule.Thursday; break;
+        case 5: scheduledToday = schedule.Friday; break;
+        case 6: scheduledToday = schedule.Saturday; break;
+        default: scheduledToday = false; break;
+    }
+    if(!scheduledToday) {
+        return -1;
+    }
+
+    // Check time of day
+    auto const secondsAfterMidnight =
+        (localTime->tm_hour * 60 * 60) +
+        (localTime->tm_min * 60) +
+        localTime->tm_sec;
+    return getScheduledActiveStationPin(schedule, secondsAfterMidnight);
+}
+
+int lastActiveStationPin = -1;
+
 void loop() {
-  // run the framework's loop function
-  esp8266React.loop();
+    // run the framework's loop function
+    esp8266React.loop();
+
+    scheduleService.read([](Schedule const & schedule) {
+        // TODO_JU npm audit reckons there are issues. Maybe also run an update and see if flash usage goes up or down (after committing)
+        auto const activeStationPin = getActiveStationPin(schedule);
+        if(activeStationPin != lastActiveStationPin) {
+            digitalWrite(lastActiveStationPin, LOW);
+            digitalWrite(activeStationPin, HIGH);
+            Serial.printf("Running station %i", activeStationPin);
+        }
+    });
 }
