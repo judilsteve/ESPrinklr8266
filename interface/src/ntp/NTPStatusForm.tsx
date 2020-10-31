@@ -1,5 +1,6 @@
 import React, { Component, Fragment } from 'react';
-import moment from 'moment';
+import dayjs from 'dayjs';
+import duration from 'dayjs/plugin/duration';
 
 import { WithTheme, withTheme } from '@material-ui/core/styles';
 import { Avatar, Divider, List, ListItem, ListItemAvatar, ListItemText, Button } from '@material-ui/core';
@@ -18,6 +19,8 @@ import { formatIsoDateTime, formatLocalDateTime } from './TimeFormat';
 import { NTPStatus, Time } from './types';
 import { redirectingAuthorizedFetch, withAuthenticatedContext, AuthenticatedContextProps } from '../authentication';
 import { TIME_ENDPOINT } from '../api';
+
+dayjs.extend(duration);
 
 type NTPStatusFormProps = RestFormProps<NTPStatus> & WithTheme & AuthenticatedContextProps;
 
@@ -43,7 +46,7 @@ class NTPStatusForm extends Component<NTPStatusFormProps, NTPStatusFormState> {
   }
 
   openSetTime = () => {
-    this.setState({ localTime: formatLocalDateTime(moment()), settingTime: true, });
+    this.setState({ localTime: formatLocalDateTime(dayjs()), settingTime: true, });
   }
 
   closeSetTime = () => {
@@ -51,11 +54,10 @@ class NTPStatusForm extends Component<NTPStatusFormProps, NTPStatusFormState> {
   }
 
   createAdjustedTime = (): Time => {
-    const currentLocalTime = moment(this.props.data.time_local);
-    const newLocalTime = moment(this.state.localTime);
-    newLocalTime.subtract(currentLocalTime.utcOffset())
-    newLocalTime.milliseconds(0);
-    newLocalTime.utc();
+    const currentLocalTime = dayjs(this.props.data.time_local);
+    const newLocalTime = dayjs(this.state.localTime)
+        .subtract(currentLocalTime.utcOffset())
+        .millisecond(0);
     return {
       time_utc: newLocalTime.format()
     }
@@ -171,7 +173,7 @@ class NTPStatusForm extends Component<NTPStatusFormProps, NTPStatusFormState> {
                 <AvTimerIcon />
               </Avatar>
             </ListItemAvatar>
-            <ListItemText primary="Uptime" secondary={moment.duration(data.uptime, 'seconds').humanize()} />
+            <ListItemText primary="Uptime" secondary={dayjs.duration(data.uptime, 'seconds').humanize()} />
           </ListItem>
           <Divider variant="inset" component="li" />
         </List>

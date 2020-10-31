@@ -35,7 +35,7 @@ void ScheduleService::begin() {
 }
 
 void ScheduleService::onConfigUpdated() {
-    for(auto & const station : _state.Stations) {
+    for(auto const & station : _state.Stations) {
         pinMode(station.Pin, OUTPUT);
     }
 }

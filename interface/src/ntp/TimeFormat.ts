@@ -1,6 +1,8 @@
-// TODO_JU Replace moment
-import moment, { Moment } from 'moment';
+import dayjs, { Dayjs } from 'dayjs';
+import UTC from 'dayjs/plugin/utc';
 
-export const formatIsoDateTime = (isoDateString: string) => moment.parseZone(isoDateString).format('ll @ HH:mm:ss');
+dayjs.extend(UTC);
 
-export const formatLocalDateTime = (moment: Moment) => moment.format('YYYY-MM-DDTHH:mm');
+export const formatIsoDateTime = (isoDateString: string) => dayjs(isoDateString).local().format('ll @ HH:mm:ss');
+
+export const formatLocalDateTime = (localDateTime: Dayjs) => localDateTime.format('YYYY-MM-DDTHH:mm');

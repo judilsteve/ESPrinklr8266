@@ -82,9 +82,9 @@ class Schedule {
 
         root["startOffsetFromMidnightSeconds"] = schedule.StartOffsetFromMidnightSeconds;
 
-        auto jsonStations = root.createNestedArray("stations");
-        for(auto & const station : schedule.Stations) {
-            auto jsonStation = jsonStations.createNestedObject();
+        JsonArray jsonStations = root.createNestedArray("stations");
+        for(auto & station : schedule.Stations) {
+            JsonObject jsonStation = jsonStations.createNestedObject();
             Station::read(station, jsonStation);
         }
 

@@ -24,16 +24,16 @@ void setup() {
 
 #define SECONDS_BETWEEN_STATIONS 10;
 
-int getScheduledActiveStationPin(Schedule const & schedule, int const secondsAfterMidnight) {
-    auto const actualSecondsIntoRun = secondsAfterMidnight - (int)schedule.StartOffsetFromMidnightSeconds;
+int getScheduledActiveStationPin(std::vector<Station> const & stations, time_t scheduleStartTime, time_t currentTime) {
+    auto const actualSecondsIntoRun = currentTime - scheduleStartTime;
     if (actualSecondsIntoRun < 0) {
         return -1;
     }
 
     auto testSecondsIntoRun = 0;
-    auto const stationCount = schedule.Stations.size();
+    auto const stationCount = stations.size();
     for (auto i = 0; i < stationCount; i++) {
-        auto & const testStation = schedule.Stations[i];
+        auto const & testStation = stations[i];
         testSecondsIntoRun += testStation.DurationSeconds;
         if(actualSecondsIntoRun < testSecondsIntoRun) {
             return testStation.Pin;
@@ -57,20 +57,24 @@ int getActiveStationPin(Schedule const & schedule) {
     }
 
     // Manual run mode
-    auto const unixTime = time(nullptr);
-    if(schedule.ManualStartTime < unixTime) {
-        // TODO_JU manual run logic
+    auto const actualTime = time(nullptr);
+    auto const manualStartTime = schedule.ManualStartTime;
+    if(manualStartTime < actualTime) {
+        auto const manualRunActiveStationPin = getScheduledActiveStationPin(schedule.Stations, manualStartTime, actualTime);
+        if(manualRunActiveStationPin != -1) {
+            return manualRunActiveStationPin;
+        }
     }
 
     // Temporary disable (rain mode)
-    if(schedule.DisableUntil > unixTime) {
+    if(schedule.DisableUntil > actualTime) {
         return -1;
     }
 
     // Check day of week
-    auto const localTime = localtime(&unixTime);
+    auto const localActualTime = localtime(&actualTime);
     bool scheduledToday;
-    switch(localTime->tm_wday) {
+    switch(localActualTime->tm_wday) {
         case 0: scheduledToday = schedule.Sunday; break;
         case 1: scheduledToday = schedule.Monday; break;
         case 2: scheduledToday = schedule.Tuesday; break;
@@ -84,12 +88,12 @@ int getActiveStationPin(Schedule const & schedule) {
         return -1;
     }
 
-    // Check time of day
-    auto const secondsAfterMidnight =
-        (localTime->tm_hour * 60 * 60) +
-        (localTime->tm_min * 60) +
-        localTime->tm_sec;
-    return getScheduledActiveStationPin(schedule, secondsAfterMidnight);
+    auto localScheduleStartTime = tm(*localActualTime);
+    localScheduleStartTime.tm_hour = schedule.StartOffsetFromMidnightSeconds / 3600;
+    localScheduleStartTime.tm_min = (schedule.StartOffsetFromMidnightSeconds % 3600) / 60;
+    localScheduleStartTime.tm_sec = schedule.StartOffsetFromMidnightSeconds % 60;
+    auto const scheduleStartTime = mktime(&localScheduleStartTime);
+    return getScheduledActiveStationPin(schedule.Stations, scheduleStartTime, actualTime);
 }
 
 int lastActiveStationPin = -1;
