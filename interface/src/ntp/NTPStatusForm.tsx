@@ -2,6 +2,7 @@ import React, { Component, Fragment } from 'react';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import UTC from 'dayjs/plugin/utc';
 
 import { WithTheme, withTheme } from '@material-ui/core/styles';
 import { Avatar, Divider, List, ListItem, ListItemAvatar, ListItemText, Button } from '@material-ui/core';
@@ -16,13 +17,14 @@ import RefreshIcon from '@material-ui/icons/Refresh';
 
 import { RestFormProps, FormButton, HighlightAvatar } from '../components';
 import { isNtpActive, ntpStatusHighlight, ntpStatus } from './NTPStatus';
-import { formatIsoDateTime, formatLocalDateTime } from './TimeFormat';
+import { formatLocalDateTime } from './TimeFormat';
 import { NTPStatus, Time } from './types';
 import { redirectingAuthorizedFetch, withAuthenticatedContext, AuthenticatedContextProps } from '../authentication';
 import { TIME_ENDPOINT } from '../api';
 
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
+dayjs.extend(UTC);
 
 type NTPStatusFormProps = RestFormProps<NTPStatus> & WithTheme & AuthenticatedContextProps;
 
@@ -56,13 +58,10 @@ class NTPStatusForm extends Component<NTPStatusFormProps, NTPStatusFormState> {
   }
 
   createAdjustedTime = (): Time => {
-    const currentLocalTime = dayjs(this.props.data.time_local);
-    const newLocalTime = dayjs(this.state.localTime)
-        .subtract(currentLocalTime.utcOffset())
-        .millisecond(0);
+    const currentLocalTime = dayjs(this.state.localTime);
     return {
-      time_utc: newLocalTime.format()
-    }
+      time_utc: currentLocalTime.utc().format("YYYY-MM-DDTHH:mm:ss[Z]")
+    };
   }
 
   configureTime = () => {
@@ -157,7 +156,7 @@ class NTPStatusForm extends Component<NTPStatusFormProps, NTPStatusFormState> {
                 <AccessTimeIcon />
               </Avatar>
             </ListItemAvatar>
-            <ListItemText primary="Local Time" secondary={formatIsoDateTime(data.time_local)} />
+            <ListItemText primary="Local Time" secondary={dayjs(data.time_local).format('MMMM D, YYYY @ HH:mm:ss')} />
           </ListItem>
           <Divider variant="inset" component="li" />
           <ListItem>
@@ -166,7 +165,7 @@ class NTPStatusForm extends Component<NTPStatusFormProps, NTPStatusFormState> {
                 <SwapVerticalCircleIcon />
               </Avatar>
             </ListItemAvatar>
-            <ListItemText primary="UTC Time" secondary={formatIsoDateTime(data.time_utc)} />
+            <ListItemText primary="UTC Time" secondary={dayjs(data.time_utc).utc().format('MMMM D, YYYY @ HH:mm:ss')} />
           </ListItem>
           <Divider variant="inset" component="li" />
           <ListItem>
