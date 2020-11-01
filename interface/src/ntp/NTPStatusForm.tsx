@@ -1,6 +1,7 @@
 import React, { Component, Fragment } from 'react';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
+import relativeTime from 'dayjs/plugin/relativeTime';
 
 import { WithTheme, withTheme } from '@material-ui/core/styles';
 import { Avatar, Divider, List, ListItem, ListItemAvatar, ListItemText, Button } from '@material-ui/core';
@@ -21,6 +22,7 @@ import { redirectingAuthorizedFetch, withAuthenticatedContext, AuthenticatedCont
 import { TIME_ENDPOINT } from '../api';
 
 dayjs.extend(duration);
+dayjs.extend(relativeTime);
 
 type NTPStatusFormProps = RestFormProps<NTPStatus> & WithTheme & AuthenticatedContextProps;
 
