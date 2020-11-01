@@ -18,9 +18,7 @@ ScheduleService::ScheduleService(
         this,
         fileSystem,
         "/config/lightState.json")
-    {
-        addUpdateHandler([&](const String& originId) { onConfigUpdated(); }, false);
-    }
+    { }
 
 void ScheduleService::begin() {
     _state.DisableUntil = 0;
@@ -32,10 +30,4 @@ void ScheduleService::begin() {
     _state.Friday = false;
     _state.Stations = std::vector<Station>(0);
     _state.TestStationPin = -1;
-}
-
-void ScheduleService::onConfigUpdated() {
-    for(auto const & station : _state.Stations) {
-        pinMode(station.Pin, OUTPUT);
-    }
 }

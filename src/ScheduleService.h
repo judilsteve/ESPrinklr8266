@@ -200,7 +200,6 @@ class ScheduleService : public StatefulService<Schedule> {
     FSPersistence<Schedule> fsPersistence;
 
     void registerConfig();
-    void onConfigUpdated();
 };
 
 #endif

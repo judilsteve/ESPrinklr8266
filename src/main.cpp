@@ -107,8 +107,10 @@ void loop() {
         auto const activeStationPin = getActiveStationPin(schedule);
         if(activeStationPin != lastActiveStationPin) {
             digitalWrite(lastActiveStationPin, LOW);
+            pinMode(activeStationPin, OUTPUT);
             digitalWrite(activeStationPin, HIGH);
-            Serial.printf("Running station %i", activeStationPin);
+            Serial.printf("Running station %i\n", activeStationPin);
+            lastActiveStationPin = activeStationPin;
         }
     });
 }
