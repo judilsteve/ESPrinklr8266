@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React, { Fragment, useContext, useEffect } from 'react';
 import { TextValidator, ValidatorForm } from 'react-material-ui-form-validator';
 
 import { Checkbox, List, ListItem, ListItemText, ListItemAvatar, ListItemSecondaryAction } from '@material-ui/core';
@@ -19,46 +19,38 @@ import { WiFiSettings } from './types';
 
 type WiFiStatusFormProps = RestFormProps<WiFiSettings>;
 
-class WiFiSettingsForm extends React.Component<WiFiStatusFormProps> {
+const WiFiSettingsForm = (props: WiFiStatusFormProps) => {
 
-  static contextType = WiFiConnectionContext;
-  context!: React.ContextType<typeof WiFiConnectionContext>;
+    const context = useContext(WiFiConnectionContext);
 
-  constructor(props: WiFiStatusFormProps, context: WiFiConnectionContext) {
-    super(props);
+    const { selectedNetwork, deselectNetwork } = context;
+    const { data, handleValueChange, setData, saveData } = props;
 
-    const { selectedNetwork } = context;
-    if (selectedNetwork) {
-      const wifiSettings: WiFiSettings = {
-        ssid: selectedNetwork.ssid,
-        password: "",
-        hostname: props.data.hostname,
-        static_ip_config: false,
-      }
-      props.setData(wifiSettings);
-    }
-  }
+    useEffect(() => {
+        if(selectedNetwork) {
+            setData({
+                ssid: selectedNetwork!.ssid,
+                password: '',
+                hostname: data.hostname,
+                static_ip_config: false
+            });
+        }
+        return () => deselectNetwork();
+    }, [data.hostname, deselectNetwork, selectedNetwork, setData]);
 
-  componentWillMount() {
-    ValidatorForm.addValidationRule('isIP', isIP);
-    ValidatorForm.addValidationRule('isHostname', isHostname);
-    ValidatorForm.addValidationRule('isOptionalIP', optional(isIP));
-  }
+    useEffect(() => {
+        ValidatorForm.addValidationRule('isIP', isIP);
+        ValidatorForm.addValidationRule('isHostname', isHostname);
+        ValidatorForm.addValidationRule('isOptionalIP', optional(isIP));
+        return () => {
+            ValidatorForm.removeValidationRule('isIP');
+            ValidatorForm.removeValidationRule('isHostname');
+            ValidatorForm.removeValidationRule('isOptionalIP');
+        }
+    }, []);
 
-  deselectNetworkAndLoadData = () => {
-    this.context.deselectNetwork();
-    this.props.loadData();
-  }
-
-  componentWillUnmount() {
-    this.context.deselectNetwork();
-  }
-
-  render() {
-    const { selectedNetwork, deselectNetwork } = this.context;
-    const { data, handleValueChange, saveData } = this.props;
     return (
-      <ValidatorForm onSubmit={saveData} ref="WiFiSettingsForm">
+      <ValidatorForm onSubmit={saveData}>
         {
           selectedNetwork ?
             <List>
@@ -194,7 +186,6 @@ class WiFiSettingsForm extends React.Component<WiFiStatusFormProps> {
         </FormActions>
       </ValidatorForm>
     );
-  }
 }
 
 export default WiFiSettingsForm;

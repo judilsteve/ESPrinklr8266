@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { SectionContent } from '../components';
 import { UPLOAD_FIRMWARE_ENDPOINT } from '../api';
@@ -7,64 +7,53 @@ import UploadFirmwareForm from './UploadFirmwareForm';
 import { redirectingAuthorizedUpload } from '../authentication';
 import { withSnackbar, WithSnackbarProps } from 'notistack';
 
-interface UploadFirmwareControllerState {
-  xhr?: XMLHttpRequest;
-  progress?: ProgressEvent;
-}
+const UploadFirmwareController = (props: WithSnackbarProps) => {
 
-class UploadFirmwareController extends Component<WithSnackbarProps, UploadFirmwareControllerState> {
+    const [xhr, setXhr] = useState<XMLHttpRequest | undefined>(undefined);
+    const [progress, setProgress] = useState<ProgressEvent | undefined>(undefined);
 
-  state: UploadFirmwareControllerState = {
-    xhr: undefined,
-    progress: undefined
-  };
+    useEffect(() => {
+        return () => xhr?.abort();
+    }, [xhr]);
 
-  componentWillUnmount() {
-    this.state.xhr?.abort();
-  }
+    const uploadFile = (file: File) => {
+        if (xhr) {
+            return;
+        }
+        let upload = new XMLHttpRequest();
+        setXhr(upload);
+        redirectingAuthorizedUpload(upload, UPLOAD_FIRMWARE_ENDPOINT, file, setProgress).then(() => {
+            if (upload.status !== 200) {
+                throw Error("Invalid status code: " + upload.status);
+            }
+            props.enqueueSnackbar("Activating new firmware", { variant: 'success' });
+            setProgress(undefined);
+            setXhr(undefined);
+        }).catch((error: Error) => {
+            if (error.name === 'AbortError') {
+                props.enqueueSnackbar("Upload cancelled by user", { variant: 'warning' });
+            } else {
+                const errorMessage = error.name === 'UploadError' ? "Error during upload" : (error.message || "Unknown error");
+                props.enqueueSnackbar("Problem uploading: " + errorMessage, { variant: 'error' });
+                setProgress(undefined);
+            setXhr(undefined);
+            }
+        });
+    };
 
-  updateProgress = (progress: ProgressEvent) => {
-    this.setState({ progress });
-  }
-
-  uploadFile = (file: File) => {
-    if (this.state.xhr) {
-      return;
+    const cancelUpload = () => {
+        if (xhr) {
+            xhr.abort();
+            setProgress(undefined);
+            setXhr(undefined);
+        }
     }
-    var xhr = new XMLHttpRequest();
-    this.setState({ xhr });
-    redirectingAuthorizedUpload(xhr, UPLOAD_FIRMWARE_ENDPOINT, file, this.updateProgress).then(() => {
-      if (xhr.status !== 200) {
-        throw Error("Invalid status code: " + xhr.status);
-      }
-      this.props.enqueueSnackbar("Activating new firmware", { variant: 'success' });
-      this.setState({ xhr: undefined, progress: undefined });
-    }).catch((error: Error) => {
-      if (error.name === 'AbortError') {
-        this.props.enqueueSnackbar("Upload cancelled by user", { variant: 'warning' });
-      } else {
-        const errorMessage = error.name === 'UploadError' ? "Error during upload" : (error.message || "Unknown error");
-        this.props.enqueueSnackbar("Problem uploading: " + errorMessage, { variant: 'error' });
-        this.setState({ xhr: undefined, progress: undefined });
-      }
-    });
-  }
 
-  cancelUpload = () => {
-    if (this.state.xhr) {
-      this.state.xhr.abort();
-      this.setState({ xhr: undefined, progress: undefined });
-    }
-  }
-
-  render() {
-    const { xhr, progress } = this.state;
     return (
       <SectionContent title="Upload Firmware">
-        <UploadFirmwareForm onFileSelected={this.uploadFile} onCancel={this.cancelUpload} uploading={!!xhr} progress={progress} />
+        <UploadFirmwareForm onFileSelected={uploadFile} onCancel={cancelUpload} uploading={!!xhr} progress={progress} />
       </SectionContent>
     );
-  }
 
 }
 

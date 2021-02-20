@@ -19,7 +19,7 @@ const AuthenticationWrapper : React.FC<AuthenticationWrapperProps> = props => {
     const [user, setUser] = useState<Me | undefined>(undefined);
     const [initialised, setInitialised] = useState(false);
 
-    const refresh = useCallback(async () => {
+    const refresh = useCallback(() => {(async () => {
         let refreshedUser: Me | undefined;
         if (!security) {
             refreshedUser = { admin: true, username: "admin" };
@@ -41,9 +41,9 @@ const AuthenticationWrapper : React.FC<AuthenticationWrapperProps> = props => {
         }
         setUser(refreshedUser);
         setInitialised(true);
-    }, [enqueueSnackbar, security]);
+    })(); }, [enqueueSnackbar, security]);
 
-    useEffect(() => { refresh(); }, [refresh]);
+    useEffect(refresh, [refresh]);
 
     const signIn = useCallback((accessToken: string) => {
         try {

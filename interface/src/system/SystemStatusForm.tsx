@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react';
+import React, { Fragment, useState } from 'react';
 
 import { Avatar, Button, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Box } from '@material-ui/core';
 import { List, ListItem, ListItemAvatar, ListItemText } from '@material-ui/core';
@@ -32,18 +32,15 @@ function formatNumber(num: number) {
   return new Intl.NumberFormat().format(num);
 }
 
-class SystemStatusForm extends Component<SystemStatusFormProps, SystemStatusFormState> {
+const SystemStatusForm = (props: SystemStatusFormProps) => {
 
-  state: SystemStatusFormState = {
-    confirmRestart: false,
-    confirmFactoryReset: false,
-    processing: false
-  }
+    const [confirmRestart, setConfirmRestart] = useState(false);
+    const [confirmFactoryReset, setConfirmFactoryReset] = useState(false);
+    const [processing, setProcessing] = useState(false);
 
-  createListItems() {
-    const { data } = this.props
-    return (
-      <Fragment>
+    const { data } = props;
+    const listItems = (
+      <>
         <ListItem >
           <ListItemAvatar>
             <Avatar>
@@ -112,133 +109,114 @@ class SystemStatusForm extends Component<SystemStatusFormProps, SystemStatusForm
           <ListItemText primary="File System (Used / Total)" secondary={formatNumber(data.fs_used) + ' / ' + formatNumber(data.fs_total) + ' bytes (' + formatNumber(data.fs_total - data.fs_used) + '\xa0bytes free)'} />
         </ListItem>
         <Divider variant="inset" component="li" />
-      </Fragment>
+      </>
     );
-  }
 
-  renderRestartDialog() {
-    return (
+    const onRestartConfirmed = () => {
+        setProcessing(true);
+        redirectingAuthorizedFetch(RESTART_ENDPOINT, { method: 'POST' })
+            .then(response => {
+                if (response.status === 200) {
+                    props.enqueueSnackbar("Device is restarting", { variant: 'info' });
+                    setConfirmRestart(false);
+                    setProcessing(false);
+                } else {
+                    throw Error("Invalid status code: " + response.status);
+                }
+            })
+            .catch(error => {
+                props.enqueueSnackbar(error.message || "Problem restarting device", { variant: 'error' });
+                setConfirmRestart(false);
+                setProcessing(false);
+            });
+      }
+
+    const restartDialog = (
+        <Dialog
+            open={confirmRestart}
+            onClose={() => setConfirmRestart(false)}
+        >
+            <DialogTitle>Confirm Restart</DialogTitle>
+            <DialogContent dividers>
+            Are you sure you want to restart the device?
+            </DialogContent>
+            <DialogActions>
+            <Button variant="contained" onClick={() => setConfirmRestart(false)} color="secondary">
+                Cancel
+            </Button>
+            <Button startIcon={<PowerSettingsNewIcon />} variant="contained" onClick={onRestartConfirmed} disabled={processing} color="primary" autoFocus>
+                Restart
+            </Button>
+            </DialogActions>
+        </Dialog>
+        );
+
+    const onFactoryResetConfirmed = () => {
+        setProcessing(true);
+        redirectingAuthorizedFetch(FACTORY_RESET_ENDPOINT, { method: 'POST' })
+        .then(response => {
+            if (response.status === 200) {
+            props.enqueueSnackbar("Factory reset in progress.", { variant: 'error' });
+            setProcessing(false);
+            setConfirmFactoryReset(false);
+            } else {
+            throw Error("Invalid status code: " + response.status);
+            }
+        })
+        .catch(error => {
+            props.enqueueSnackbar(error.message || "Problem factory resetting device", { variant: 'error' });
+            setProcessing(false);
+            setConfirmFactoryReset(false);
+        });
+    }
+
+    const factoryResetDialog = (
       <Dialog
-        open={this.state.confirmRestart}
-        onClose={this.onRestartRejected}
-      >
-        <DialogTitle>Confirm Restart</DialogTitle>
-        <DialogContent dividers>
-          Are you sure you want to restart the device?
-        </DialogContent>
-        <DialogActions>
-          <Button variant="contained" onClick={this.onRestartRejected} color="secondary">
-            Cancel
-          </Button>
-          <Button startIcon={<PowerSettingsNewIcon />} variant="contained" onClick={this.onRestartConfirmed} disabled={this.state.processing} color="primary" autoFocus>
-            Restart
-          </Button>
-        </DialogActions>
-      </Dialog>
-    )
-  }
-
-  onRestart = () => {
-    this.setState({ confirmRestart: true });
-  }
-
-  onRestartRejected = () => {
-    this.setState({ confirmRestart: false });
-  }
-
-  onRestartConfirmed = () => {
-    this.setState({ processing: true });
-    redirectingAuthorizedFetch(RESTART_ENDPOINT, { method: 'POST' })
-      .then(response => {
-        if (response.status === 200) {
-          this.props.enqueueSnackbar("Device is restarting", { variant: 'info' });
-          this.setState({ processing: false, confirmRestart: false });
-        } else {
-          throw Error("Invalid status code: " + response.status);
-        }
-      })
-      .catch(error => {
-        this.props.enqueueSnackbar(error.message || "Problem restarting device", { variant: 'error' });
-        this.setState({ processing: false, confirmRestart: false });
-      });
-  }
-
-  renderFactoryResetDialog() {
-    return (
-      <Dialog
-        open={this.state.confirmFactoryReset}
-        onClose={this.onFactoryResetRejected}
+        open={confirmFactoryReset}
+        onClose={() => setConfirmFactoryReset(false)}
       >
         <DialogTitle>Confirm Factory Reset</DialogTitle>
         <DialogContent dividers>
           Are you sure you want to reset the device to its factory defaults?
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" onClick={this.onFactoryResetRejected} color="secondary">
+          <Button variant="contained" onClick={() => setConfirmFactoryReset(false)} color="secondary">
             Cancel
           </Button>
-          <ErrorButton startIcon={<SettingsBackupRestoreIcon />} variant="contained" onClick={this.onFactoryResetConfirmed} disabled={this.state.processing} autoFocus>
+          <ErrorButton startIcon={<SettingsBackupRestoreIcon />} variant="contained" onClick={onFactoryResetConfirmed} disabled={processing} autoFocus>
             Factory Reset
           </ErrorButton>
         </DialogActions>
       </Dialog>
     )
-  }
 
-  onFactoryReset = () => {
-    this.setState({ confirmFactoryReset: true });
-  }
-
-  onFactoryResetRejected = () => {
-    this.setState({ confirmFactoryReset: false });
-  }
-
-  onFactoryResetConfirmed = () => {
-    this.setState({ processing: true });
-    redirectingAuthorizedFetch(FACTORY_RESET_ENDPOINT, { method: 'POST' })
-      .then(response => {
-        if (response.status === 200) {
-          this.props.enqueueSnackbar("Factory reset in progress.", { variant: 'error' });
-          this.setState({ processing: false, confirmFactoryReset: false });
-        } else {
-          throw Error("Invalid status code: " + response.status);
-        }
-      })
-      .catch(error => {
-        this.props.enqueueSnackbar(error.message || "Problem factory resetting device", { variant: 'error' });
-        this.setState({ processing: false, confirmRestart: false });
-      });
-  }
-
-  render() {
-    const me = this.props.authenticatedContext.me;
+    const me = props.authenticatedContext.me;
     return (
       <Fragment>
         <List>
-          {this.createListItems()}
+          {listItems}
         </List>
         <Box display="flex" flexWrap="wrap">
           <Box flexGrow={1} padding={1}>
-            <FormButton startIcon={<RefreshIcon />} variant="contained" color="secondary" onClick={this.props.loadData}>
+            <FormButton startIcon={<RefreshIcon />} variant="contained" color="secondary" onClick={props.loadData}>
               Refresh
             </FormButton>
           </Box>
           {me.admin &&
             <Box flexWrap="none" padding={1} whiteSpace="nowrap">
-              <FormButton startIcon={<PowerSettingsNewIcon />} variant="contained" color="primary" onClick={this.onRestart}>
+              <FormButton startIcon={<PowerSettingsNewIcon />} variant="contained" color="primary" onClick={() => setConfirmRestart(true)}>
                 Restart
               </FormButton>
-              <ErrorButton startIcon={<SettingsBackupRestoreIcon />} variant="contained" onClick={this.onFactoryReset}>
+              <ErrorButton startIcon={<SettingsBackupRestoreIcon />} variant="contained" onClick={() => setConfirmFactoryReset(true)}>
                 Factory reset
               </ErrorButton>
             </Box>
           }
         </Box>
-        {this.renderRestartDialog()}
-        {this.renderFactoryResetDialog()}
+        {restartDialog}
+        {factoryResetDialog}
       </Fragment>
     );
-  }
 
 }
 

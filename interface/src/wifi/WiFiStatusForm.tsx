@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react';
+import React, { Fragment } from 'react';
 
 import { WithTheme, withTheme } from '@material-ui/core/styles';
 import { Avatar, Divider, List, ListItem, ListItemAvatar, ListItemText } from '@material-ui/core';
@@ -16,19 +16,18 @@ import { WiFiStatus } from './types';
 
 type WiFiStatusFormProps = RestFormProps<WiFiStatus> & WithTheme;
 
-class WiFiStatusForm extends Component<WiFiStatusFormProps> {
+const WiFiStatusForm = (props: WiFiStatusFormProps) => {
 
-  dnsServers(status: WiFiStatus) {
-    if (!status.dns_ip_1) {
-      return "none";
+    const dnsServers = (status: WiFiStatus) => {
+        if (!status.dns_ip_1) {
+        return "none";
+        }
+        return status.dns_ip_1 + (status.dns_ip_2 ? ',' + status.dns_ip_2 : '');
     }
-    return status.dns_ip_1 + (status.dns_ip_2 ? ',' + status.dns_ip_2 : '');
-  }
 
-  createListItems() {
-    const { data, theme } = this.props
-    return (
-      <Fragment>
+    const { data, theme } = props;
+
+    const listItems = <Fragment>
         <ListItem>
           <ListItemAvatar>
             <HighlightAvatar color={wifiStatusHighlight(data, theme)}>
@@ -88,29 +87,25 @@ class WiFiStatusForm extends Component<WiFiStatusFormProps> {
                   <DNSIcon />
                 </Avatar>
               </ListItemAvatar>
-              <ListItemText primary="DNS Server IP" secondary={this.dnsServers(data)} />
+              <ListItemText primary="DNS Server IP" secondary={dnsServers(data)} />
             </ListItem>
             <Divider variant="inset" component="li" />
           </Fragment>
         }
-      </Fragment>
-    );
-  }
+    </Fragment>;
 
-  render() {
     return (
       <Fragment>
         <List>
-          {this.createListItems()}
+          {listItems}
         </List>
         <FormActions>
-          <FormButton startIcon={<RefreshIcon />} variant="contained" color="secondary" onClick={this.props.loadData}>
+          <FormButton startIcon={<RefreshIcon />} variant="contained" color="secondary" onClick={props.loadData}>
             Refresh
           </FormButton>
         </FormActions>
       </Fragment>
     );
-  }
 
 }
 

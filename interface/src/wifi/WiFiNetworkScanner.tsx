@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 import { withSnackbar, WithSnackbarProps } from 'notistack';
 
 import { createStyles, WithStyles, Theme, withStyles, Typography, LinearProgress } from '@material-ui/core';
@@ -9,17 +9,11 @@ import { redirectingAuthorizedFetch } from '../authentication';
 import { SCAN_NETWORKS_ENDPOINT, LIST_NETWORKS_ENDPOINT } from '../api';
 
 import WiFiNetworkSelector from './WiFiNetworkSelector';
-import { WiFiNetworkList, WiFiNetwork } from './types';
+import { WiFiNetwork, WiFiNetworkList } from './types';
 
 const NUM_POLLS = 10
 const POLLING_FREQUENCY = 500
 const RETRY_EXCEPTION_TYPE = "retry"
-
-interface WiFiNetworkScannerState {
-  scanningForNetworks: boolean;
-  errorMessage?: string;
-  networkList?: WiFiNetworkList;
-}
 
 const styles = (theme: Theme) => createStyles({
   scanningSettings: {
@@ -37,131 +31,127 @@ const styles = (theme: Theme) => createStyles({
 
 type WiFiNetworkScannerProps = WithSnackbarProps & WithStyles<typeof styles>;
 
-class WiFiNetworkScanner extends Component<WiFiNetworkScannerProps, WiFiNetworkScannerState> {
+let pollCount = 0;
 
-  pollCount: number = 0;
+const WiFiNetworkScanner = (props: WiFiNetworkScannerProps) => {
 
-  state: WiFiNetworkScannerState = {
-    scanningForNetworks: false,
-  };
+    const [scanningForNetworks, setScanningForNetworks] = useState(false);
+    const [networkList, setNetworkList] = useState<WiFiNetworkList | undefined>(undefined);
+    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
-  componentDidMount() {
-    this.scanNetworks();
-  }
-
-  requestNetworkScan = () => {
-    const { scanningForNetworks } = this.state;
-    if (!scanningForNetworks) {
-      this.scanNetworks();
+    const schedulePollTimeout = () => {
+        setTimeout(pollNetworkList, POLLING_FREQUENCY);
     }
-  }
 
-  scanNetworks() {
-    this.pollCount = 0;
-    this.setState({ scanningForNetworks: true, networkList: undefined, errorMessage: undefined });
-    redirectingAuthorizedFetch(SCAN_NETWORKS_ENDPOINT).then(response => {
-      if (response.status === 202) {
-        this.schedulePollTimeout();
-        return;
-      }
-      throw Error("Scanning for networks returned unexpected response code: " + response.status);
-    }).catch(error => {
-      this.props.enqueueSnackbar("Problem scanning: " + error.message, {
-        variant: 'error',
-      });
-      this.setState({ scanningForNetworks: false, networkList: undefined, errorMessage: error.message });
-    });
-  }
+    const pollNetworkList = () => {
+        redirectingAuthorizedFetch(LIST_NETWORKS_ENDPOINT)
+        .then(response => {
+            if (response.status === 200) {
+                return response.json();
+            }
+            if (response.status === 202) {
+                if (++pollCount < NUM_POLLS) {
+                    schedulePollTimeout();
+                    throw retryError;
+                } else {
+                    throw Error("Device did not return network list in timely manner.");
+                }
+            }
+            throw Error("Device returned unexpected response code: " + response.status);
+        })
+        .then(json => {
+            json.networks.sort(compareNetworks)
+            setNetworkList(json);
+            setErrorMessage(undefined);
+            setScanningForNetworks(false);
+        })
+        .catch(error => {
+            if (error.name !== RETRY_EXCEPTION_TYPE) {
+                props.enqueueSnackbar("Problem scanning: " + error.message, {
+                    variant: 'error',
+                });
+                setErrorMessage(error.message);
+                setNetworkList(undefined);
+                setScanningForNetworks(false);
+            }
+        });
+    }
 
-  schedulePollTimeout() {
-    setTimeout(this.pollNetworkList, POLLING_FREQUENCY);
-  }
+    const scanNetworks = () => {
+        pollCount = 0;
+        setScanningForNetworks(true);
+        setNetworkList(undefined);
+        setErrorMessage(undefined);
+        redirectingAuthorizedFetch(SCAN_NETWORKS_ENDPOINT).then(response => {
+            if (response.status === 202) {
+                schedulePollTimeout();
+                return;
+            }
+            throw Error("Scanning for networks returned unexpected response code: " + response.status);
+        }).catch(error => {
+            props.enqueueSnackbar("Problem scanning: " + error.message, {
+                variant: 'error',
+            });
+            setScanningForNetworks(false);
+            setNetworkList(undefined);
+            setErrorMessage(error.message);
+        });
+    }
 
-  retryError() {
-    return {
-      name: RETRY_EXCEPTION_TYPE,
-      message: "Network list not ready, will retry in " + POLLING_FREQUENCY + "ms."
+    useEffect(scanNetworks, []);
+
+    const requestNetworkScan = () => {
+        if (!scanningForNetworks) {
+            scanNetworks();
+        }
     };
-  }
 
-  compareNetworks(network1: WiFiNetwork, network2: WiFiNetwork) {
-    if (network1.rssi < network2.rssi)
-      return 1;
-    if (network1.rssi > network2.rssi)
-      return -1;
-    return 0;
-  }
+    const retryError = {
+        name: RETRY_EXCEPTION_TYPE,
+        message: "Network list not ready, will retry in " + POLLING_FREQUENCY + "ms."
+    };
 
-  pollNetworkList = () => {
-    redirectingAuthorizedFetch(LIST_NETWORKS_ENDPOINT)
-      .then(response => {
-        if (response.status === 200) {
-          return response.json();
-        }
-        if (response.status === 202) {
-          if (++this.pollCount < NUM_POLLS) {
-            this.schedulePollTimeout();
-            throw this.retryError();
-          } else {
-            throw Error("Device did not return network list in timely manner.");
-          }
-        }
-        throw Error("Device returned unexpected response code: " + response.status);
-      })
-      .then(json => {
-        json.networks.sort(this.compareNetworks)
-        this.setState({ scanningForNetworks: false, networkList: json, errorMessage: undefined })
-      })
-      .catch(error => {
-        if (error.name !== RETRY_EXCEPTION_TYPE) {
-          this.props.enqueueSnackbar("Problem scanning: " + error.message, {
-            variant: 'error',
-          });
-          this.setState({ scanningForNetworks: false, networkList: undefined, errorMessage: error.message });
-        }
-      });
-  }
+    const compareNetworks = (network1: WiFiNetwork, network2: WiFiNetwork) => {
+        if (network1.rssi < network2.rssi)
+            return 1;
+        if (network1.rssi > network2.rssi)
+            return -1;
+        return 0;
+    }
 
-  renderNetworkScanner() {
-    const { classes } = this.props;
-    const { scanningForNetworks, networkList, errorMessage } = this.state;
+    let networkScanner;
+    const { classes } = props;
     if (scanningForNetworks || !networkList) {
-      return (
-        <div className={classes.scanningSettings}>
-          <LinearProgress className={classes.scanningSettingsDetails} />
-          <Typography variant="h6" className={classes.scanningProgress}>
-            Scanning&hellip;
-          </Typography>
-        </div>
-      );
+        networkScanner = (
+            <div className={classes.scanningSettings}>
+            <LinearProgress className={classes.scanningSettingsDetails} />
+            <Typography variant="h6" className={classes.scanningProgress}>
+                Scanning&hellip;
+            </Typography>
+            </div>
+        );
+    } else if (errorMessage) {
+        networkScanner = (
+            <div className={classes.scanningSettings}>
+            <Typography variant="h6" className={classes.scanningSettingsDetails}>
+                {errorMessage}
+            </Typography>
+            </div>
+        );
+    } else {
+        networkScanner = <WiFiNetworkSelector networkList={networkList} />;
     }
-    if (errorMessage) {
-      return (
-        <div className={classes.scanningSettings}>
-          <Typography variant="h6" className={classes.scanningSettingsDetails}>
-            {errorMessage}
-          </Typography>
-        </div>
-      );
-    }
-    return (
-      <WiFiNetworkSelector networkList={networkList} />
-    );
-  }
 
-  render() {
-    const { scanningForNetworks } = this.state;
     return (
       <SectionContent title="Network Scanner">
-        {this.renderNetworkScanner()}
+        {networkScanner}
         <FormActions>
-          <FormButton startIcon={<PermScanWifiIcon />} variant="contained" color="secondary" onClick={this.requestNetworkScan} disabled={scanningForNetworks}>
+          <FormButton startIcon={<PermScanWifiIcon />} variant="contained" color="secondary" onClick={requestNetworkScan} disabled={scanningForNetworks}>
             Scan again&hellip;
           </FormButton>
         </FormActions>
       </SectionContent>
     );
-  }
 
 }
 

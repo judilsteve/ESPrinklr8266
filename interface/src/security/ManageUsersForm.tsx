@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { ValidatorForm } from 'react-material-ui-form-validator';
 
 import { Table, TableBody, TableCell, TableHead, TableFooter, TableRow, withWidth, WithWidthProps, isWidthDown } from '@material-ui/core';
@@ -44,9 +44,9 @@ const ManageUsersForm = (props: ManageUsersFormProps) => {
         });
     };
 
-    const uniqueUsername = (username: string) => {
+    const uniqueUsername = useCallback((username: string) => {
         return !props.data.users.find(u => u.username === username);
-    }
+    }, [props.data.users]);
 
     const noAdminConfigured = !props.data.users.find(u => u.admin);
 

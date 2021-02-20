@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import { Redirect, Switch, RouteComponentProps } from 'react-router-dom'
 
 import { Tabs, Tab } from '@material-ui/core';
@@ -14,35 +14,34 @@ import { WiFiNetwork } from './types';
 
 type WiFiConnectionProps = AuthenticatedContextProps & RouteComponentProps;
 
-class WiFiConnection extends Component<WiFiConnectionProps, WiFiConnectionContext> {
+const WiFiConnection = (props: WiFiConnectionProps) => {
 
-  constructor(props: WiFiConnectionProps) {
-    super(props);
-    this.state = {
-      selectNetwork: this.selectNetwork,
-      deselectNetwork: this.deselectNetwork
+    const [selectedNetwork, setSelectedNetwork] = useState<WiFiNetwork | undefined>(undefined);
+
+    const selectNetwork = (network: WiFiNetwork) => {
+        setSelectedNetwork(network);
+        props.history.push('/wifi/settings');
+    }
+
+    const deselectNetwork = () => {
+        setSelectedNetwork(undefined);
+    }
+
+    const handleTabChange = (_: React.ChangeEvent<{}>, path: string) => {
+        props.history.push(path);
     };
-  }
 
-  selectNetwork = (network: WiFiNetwork) => {
-    this.setState({ selectedNetwork: network });
-    this.props.history.push('/wifi/settings');
-  }
+    const context: WiFiConnectionContext = {
+        selectNetwork: selectNetwork,
+        deselectNetwork: deselectNetwork,
+        selectedNetwork
+    }
 
-  deselectNetwork = () => {
-    this.setState({ selectedNetwork: undefined });
-  }
-
-  handleTabChange = (event: React.ChangeEvent<{}>, path: string) => {
-    this.props.history.push(path);
-  };
-
-  render() {
-    const { authenticatedContext } = this.props;
+    const { authenticatedContext } = props;
     return (
-      <WiFiConnectionContext.Provider value={this.state}>
+      <WiFiConnectionContext.Provider value={context}>
         <MenuAppBar sectionTitle="WiFi Connection">
-          <Tabs value={this.props.match.url} onChange={this.handleTabChange} variant="fullWidth">
+          <Tabs value={props.match.url} onChange={handleTabChange} variant="fullWidth">
             <Tab value="/wifi/status" label="WiFi Status" />
             <Tab value="/wifi/scan" label="Scan Networks" disabled={!authenticatedContext.me.admin} />
             <Tab value="/wifi/settings" label="WiFi Settings" disabled={!authenticatedContext.me.admin} />
@@ -55,8 +54,7 @@ class WiFiConnection extends Component<WiFiConnectionProps, WiFiConnectionContex
           </Switch>
         </MenuAppBar>
       </WiFiConnectionContext.Provider>
-    )
-  }
+    );
 }
 
 export default withAuthenticatedContext(WiFiConnection);
