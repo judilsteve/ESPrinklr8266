@@ -1,19 +1,19 @@
-import React, { Component } from 'react';
-import { ValidatorForm } from 'react-material-ui-form-validator';
+import React, { Component, useState } from 'react';
+import { TextValidator, ValidatorForm } from 'react-material-ui-form-validator';
 
-import { Typography, Box, Checkbox } from '@material-ui/core';
+import { Checkbox, Grid, List, ListItem } from '@material-ui/core';
 import SaveIcon from '@material-ui/icons/Save';
 
 import { ENDPOINT_ROOT } from '../api';
-import { restController, RestControllerProps, RestFormLoader, RestFormProps, FormActions, FormButton, SectionContent, BlockFormControlLabel } from '../components';
+import { restController, RestControllerProps, RestFormLoader, RestFormProps, FormActions, FormButton, SectionContent } from '../components';
 
-import { LightState } from './types';
+import Schedule, { ScheduledStation } from './types/Schedule';
 
-export const LIGHT_SETTINGS_ENDPOINT = ENDPOINT_ROOT + "lightState";
+export const SCHEDULE_SETTINGS_ENDPOINT = ENDPOINT_ROOT + "schedule";
 
-type LightStateRestControllerProps = RestControllerProps<LightState>;
+type ScheduleRestControllerProps = RestControllerProps<Schedule>;
 
-class LightStateRestController extends Component<LightStateRestControllerProps> {
+class ScheduleRestController extends Component<ScheduleRestControllerProps> {
 
   componentDidMount() {
     this.props.loadData();
@@ -21,11 +21,11 @@ class LightStateRestController extends Component<LightStateRestControllerProps> 
 
   render() {
     return (
-      <SectionContent title='REST Controller' titleGutter>
+      <SectionContent title='Schedule' titleGutter>
         <RestFormLoader
           {...this.props}
           render={props => (
-            <LightStateRestControllerForm {...props} />
+            <ScheduleRestControllerForm {...props} />
           )}
         />
       </SectionContent>
@@ -34,29 +34,155 @@ class LightStateRestController extends Component<LightStateRestControllerProps> 
 
 }
 
-export default restController(LIGHT_SETTINGS_ENDPOINT, LightStateRestController);
+export default restController(SCHEDULE_SETTINGS_ENDPOINT, ScheduleRestController);
 
-type LightStateRestControllerFormProps = RestFormProps<LightState>;
+type ScheduleFormProps = RestFormProps<Schedule>;
 
-function LightStateRestControllerForm(props: LightStateRestControllerFormProps) {
-  const { data, saveData, handleValueChange } = props;
+type StationFormValue = {
+    name: string,
+    pin: string,
+    durationSeconds: string
+};
+
+const makeStationFormValues = (stations: ScheduledStation[]) => {
+    if(stations.length) {
+        return stations.map(s => ({
+            name: s.name,
+            pin: s.pin.toString(),
+            durationSeconds: s.durationSeconds.toString()
+        }));
+    } else {
+        return [{
+            name: '',
+            pin: '',
+            durationSeconds: ''
+        }];
+    }
+}
+
+const makeStation = (station: StationFormValue): ScheduledStation => {
+    return {
+        pin: parseInt(station.pin),
+        durationSeconds: parseInt(station.durationSeconds),
+        name: station.name
+    };
+}
+
+const ScheduleRestControllerForm = (props: ScheduleFormProps) => {
+  const { data, setData, saveData, handleValueChange } = props;
+
+  const daysOfWeek = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday'
+  ];
+
+  const [stations, setStations] = useState(makeStationFormValues(data.stations));
+
+  const renameStation = (stationIndex: number, newName: string) => {
+    console.debug(newName);
+    const station = stations[stationIndex];
+    station.name = newName;
+    setStations([...stations]);
+    if(station.name) {
+        setData({...data, stations: stations.map(makeStation)});
+    }
+  };
+
+  const setStationDuration = (stationIndex: number, newDuration: string) => {
+    const station = stations[stationIndex];
+    station.durationSeconds = newDuration;
+    setStations([...stations]);
+    if(parseInt(station.durationSeconds).toString() === station.durationSeconds) {
+        setData({...data, stations: stations.map(makeStation)});
+    }
+  };
+
+  const setStationPin = (stationIndex: number, newPin: string) => {
+    const station = stations[stationIndex];
+    station.pin = newPin;
+    setStations([...stations]);
+    if(parseInt(station.pin).toString() === station.pin) {
+        setData({...data, stations: stations.map(makeStation)});
+    }
+  };
+
+  console.debug(stations);
+
   return (
     <ValidatorForm onSubmit={saveData}>
-      <Box bgcolor="primary.main" color="primary.contrastText" p={2} mt={2} mb={2}>
-        <Typography variant="body1">
-          The form below controls the LED via the RESTful service exposed by the ESP device.
-        </Typography>
-      </Box>
-      <BlockFormControlLabel
-        control={
-          <Checkbox
-            checked={data.led_on}
-            onChange={handleValueChange('led_on')}
-            color="primary"
-          />
-        }
-        label="LED State?"
-      />
+      <SectionContent title='Quick Actions' titleGutter>
+        <>TODO_JU Test, disable today, and run now buttons</>
+      </SectionContent>
+      <SectionContent title='Days of Week' titleGutter>
+        <List>
+            {
+                daysOfWeek.map(d => <ListItem key={d}>
+                    <Checkbox
+                    checked={data[d.toLowerCase() as keyof Schedule] as boolean}
+                    onChange={handleValueChange(d.toLowerCase() as keyof Schedule)}
+                    color="primary" />{d}
+                </ListItem>)
+            }
+        </List>
+      </SectionContent>
+      <SectionContent title='Start Time' titleGutter>
+          TODO_JU Start Time
+      </SectionContent>
+      <SectionContent title='Stations' titleGutter>
+          <List>
+              {
+                  stations.map((s, i) => <ListItem key={i}>
+                      <Grid container spacing={3}>
+                        <Grid item xs={12} lg={6}>
+                            <TextValidator
+                                label="Name"
+                                fullWidth
+                                required
+                                name="name"
+                                value={s.name}
+                                /* Typescript annotations for this component are bullshit, hence the "as any" */
+                                onChange={e => renameStation(i, (e as any).target.value as string)}
+                                validators={['required']}
+                                errorMessages={['A name is required']}/>
+                        </Grid>
+                        <Grid item xs={12} lg={3}>
+                            <TextValidator
+                                label="Duration (seconds)"
+                                fullWidth
+                                required
+                                name="duration"
+                                value={s.durationSeconds}
+                                /* Typescript annotations for this component are bullshit, hence the "as any" */
+                                onChange={e => setStationDuration(i, (e as any).target.value as string)}
+                                validators={['required', 'isNumber', 'isPositive']}
+                                errorMessages={['A duration is required', 'Duration must be a whole number', 'Duration must be positive']}/>
+                        </Grid>
+                        <Grid item xs={12} lg={1}>
+                            <TextValidator
+                                label="Pin"
+                                fullWidth
+                                required
+                                name="pin"
+                                value={s.pin}
+                                /* Typescript annotations for this component are bullshit, hence the "as any" */
+                                onChange={e => setStationPin(i, (e as any).target.value as string)}
+                                validators={['required', 'isNumber', 'isPositive']}
+                                errorMessages={['A pin is required', 'Pin must be a whole number', 'Pin must be positive']}/>
+                        </Grid>
+                        <Grid item xs={12} lg={2}>
+                            TODO_JU Add/Delete station buttons
+                        </Grid>
+                      </Grid>
+                  </ListItem>)
+              }
+          </List>
+      </SectionContent>
+      * Value is required
       <FormActions>
         <FormButton startIcon={<SaveIcon />} variant="contained" color="primary" type="submit">
           Save

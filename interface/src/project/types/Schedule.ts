@@ -1,4 +1,4 @@
-export default interface WeeklySchedule {
+export default interface Schedule {
     monday: boolean;
     tuesday: boolean;
     wednesday: boolean;
@@ -7,7 +7,7 @@ export default interface WeeklySchedule {
     saturday: boolean;
     sunday: boolean;
     startOffsetFromMidnightSeconds: number;
-    stations: Array<ScheduledStation>;
+    stations: ScheduledStation[];
     disableUntil: number;
     testStationPin: number;
     manualStartTime: number;

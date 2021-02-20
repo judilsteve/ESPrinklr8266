@@ -103,7 +103,8 @@ void loop() {
     esp8266React.loop();
 
     scheduleService.read([](Schedule const & schedule) {
-        // TODO_JU npm audit reckons there are issues. Maybe also run an update and see if flash usage goes up or down (after committing)
+        // TODO_JU npm audit reckons there are issues.
+        // TODO_JU Check that time fns actually return time configured in the frontend
         auto const activeStationPin = getActiveStationPin(schedule);
         if(activeStationPin != lastActiveStationPin) {
             digitalWrite(lastActiveStationPin, LOW);
