@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { TextValidator, ValidatorForm } from 'react-material-ui-form-validator';
 
-import { Checkbox, Fab, Grid, IconButton, List, ListItem } from '@material-ui/core';
+import { Box, Card, Checkbox, Fab, Grid, IconButton, List, ListItem } from '@material-ui/core';
 import SaveIcon from '@material-ui/icons/Save';
 
 import { ENDPOINT_ROOT } from '../api';
@@ -132,7 +132,7 @@ const ScheduleRestControllerForm = (props: ScheduleFormProps) => {
   return (
     <ValidatorForm onSubmit={saveData}>
       <SectionContent title='Quick Actions' titleGutter>
-        <>TODO_JU Test, disable today, and run now buttons</>
+        <>TODO_JU Test/stop test, disable until/undisable, and run now/stop buttons</>
       </SectionContent>
       <SectionContent title='Days of Week' titleGutter>
         <List>
@@ -149,10 +149,10 @@ const ScheduleRestControllerForm = (props: ScheduleFormProps) => {
       <SectionContent title='Start Time' titleGutter>
         <TimePicker value={startTime} onChange={setStartTime} />
       </SectionContent>
-      <SectionContent title='Stations' titleGutter>{/* TODO_JU Cards to delimit each station? */}
+      <SectionContent title='Stations' titleGutter>
           <List>
               {
-                  stations.map((s, i) => <ListItem key={i}>
+                  stations.map((s, i) => <Box m={2}><Card><ListItem key={i}>
                       <Grid container spacing={3}>
                         <Grid item xs={12} lg={6}>
                             <TextValidator
@@ -196,12 +196,14 @@ const ScheduleRestControllerForm = (props: ScheduleFormProps) => {
                             </IconButton>
                         </Grid>
                       </Grid>
-                  </ListItem>)
+                  </ListItem></Card></Box>)
               }
               <ListItem>
-                <Fab color="primary" onClick={addStation}>
-                    <Add />
-                </Fab>
+                <Box m={2}>
+                    <Fab color="primary" onClick={addStation}>
+                        <Add />
+                    </Fab>
+                </Box>
               </ListItem>
           </List>
       </SectionContent>

@@ -15,7 +15,7 @@ const ProjectMenu = (props : RouteComponentProps) => {
           <ListItemIcon>
             <SettingsRemoteIcon />
           </ListItemIcon>
-          <ListItemText primary="ESPrinklr8266" />
+          <ListItemText primary="ESPrinkler" />
         </ListItem>
       </List>
     );

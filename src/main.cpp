@@ -32,7 +32,7 @@ int getScheduledActiveStationPin(std::vector<Station> const & stations, time_t s
 
     auto testSecondsIntoRun = 0;
     auto const stationCount = stations.size();
-    for (auto i = 0; i < stationCount; i++) {
+    for (size_t i = 0; i < stationCount; i++) {
         auto const & testStation = stations[i];
         testSecondsIntoRun += testStation.DurationSeconds;
         if(actualSecondsIntoRun < testSecondsIntoRun) {

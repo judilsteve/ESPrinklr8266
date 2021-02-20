@@ -1,9 +1,13 @@
 #include <WiFiSettingsService.h>
 
+#include <ESP8266mDNS.h>
+#include <ESP8266LLMNR.h>
+
 WiFiSettingsService::WiFiSettingsService(AsyncWebServer* server, FS* fs, SecurityManager* securityManager) :
     _httpEndpoint(WiFiSettings::read, WiFiSettings::update, this, server, WIFI_SETTINGS_SERVICE_PATH, securityManager),
     _fsPersistence(WiFiSettings::read, WiFiSettings::update, this, fs, WIFI_SETTINGS_FILE),
-    _lastConnectionAttempt(0) {
+    _lastConnectionAttempt(0),
+    _llmnrIsRunning(false) {
   // We want the device to come up in opmode=0 (WIFI_OFF), when erasing the flash this is not the default.
   // If needed, we save opmode=0 before disabling persistence so the device boots with WiFi disabled in the future.
   if (WiFi.getMode() != WIFI_OFF) {
@@ -47,10 +51,19 @@ void WiFiSettingsService::reconfigureWiFiConnection() {
 #elif defined(ESP8266)
   WiFi.disconnect(true);
 #endif
+  auto lowercaseHostname = String(_state.hostname);
+  lowercaseHostname.toLowerCase();
+  if(MDNS.isRunning()) {
+    MDNS.notifyAPChange();
+  }
+  if(_llmnrIsRunning) {
+    LLMNR.notify_ap_change();
+  }
 }
 
 void WiFiSettingsService::loop() {
   unsigned long currentMillis = millis();
+  if(MDNS.isRunning()) MDNS.update();
   if (!_lastConnectionAttempt || (unsigned long)(currentMillis - _lastConnectionAttempt) >= WIFI_RECONNECTION_DELAY) {
     _lastConnectionAttempt = currentMillis;
     manageSTA();
@@ -79,7 +92,17 @@ void WiFiSettingsService::manageSTA() {
 #endif
     }
     // attempt to connect to the network
-    WiFi.begin(_state.ssid.c_str(), _state.password.c_str());
+    if(WiFi.begin(_state.ssid.c_str(), _state.password.c_str())) {
+        auto lowercaseHostname = String(_state.hostname);
+        lowercaseHostname.toLowerCase();
+        if(MDNS.isRunning()) {
+            MDNS.setHostname(lowercaseHostname);
+            MDNS.notifyAPChange();
+        } else {
+            MDNS.begin(lowercaseHostname);
+        }
+        _llmnrIsRunning = LLMNR.begin(lowercaseHostname.c_str());
+    }
   }
 }
 
@@ -96,5 +119,7 @@ void WiFiSettingsService::onStationModeStop(WiFiEvent_t event, WiFiEventInfo_t i
 #elif defined(ESP8266)
 void WiFiSettingsService::onStationModeDisconnected(const WiFiEventStationModeDisconnected& event) {
   WiFi.disconnect(true);
+  if(MDNS.isRunning()) MDNS.notifyAPChange();
+  if(_llmnrIsRunning) LLMNR.notify_ap_change();
 }
 #endif

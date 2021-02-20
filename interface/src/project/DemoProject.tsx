@@ -10,7 +10,7 @@ import LightStateRestController from './LightStateRestController';
 const DemoProject = (_: RouteComponentProps) => {
 
     return (
-      <MenuAppBar sectionTitle="ESPrinklr8266">
+      <MenuAppBar sectionTitle="ESPrinkler">
         <Switch>
           <AuthenticatedRoute exact path={`/${PROJECT_PATH}/`} component={LightStateRestController} />
           <Redirect to={`/${PROJECT_PATH}/`} />

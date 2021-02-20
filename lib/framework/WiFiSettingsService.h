@@ -93,6 +93,7 @@ class WiFiSettingsService : public StatefulService<WiFiSettings> {
   HttpEndpoint<WiFiSettings> _httpEndpoint;
   FSPersistence<WiFiSettings> _fsPersistence;
   unsigned long _lastConnectionAttempt;
+  bool _llmnrIsRunning;
 
 #ifdef ESP32
   bool _stopping;
