@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { withSnackbar, WithSnackbarProps } from 'notistack';
 
 import { redirectingAuthorizedFetch } from '../authentication';
@@ -42,7 +42,7 @@ export function restController<D, P extends RestControllerProps<D>>(endpointUrl:
 
         const { enqueueSnackbar } = props;
 
-        const loadData = async () => {
+        const loadData = useCallback(() => {(async () => {
             setLoading(true);
             setData(undefined);
             setErrorMessage(undefined);
@@ -59,7 +59,7 @@ export function restController<D, P extends RestControllerProps<D>>(endpointUrl:
                 setErrorMessage(errorMessage);
             }
             setLoading(false);
-        };
+        })();}, [enqueueSnackbar]);
 
         const saveData = async () => {
             setLoading(true);

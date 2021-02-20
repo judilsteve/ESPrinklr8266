@@ -15,7 +15,6 @@ import Security from './security/Security';
 import System from './system/System';
 
 import { PROJECT_PATH } from './api';
-import Mqtt from './mqtt/Mqtt';
 import { withFeatures, WithFeaturesProps } from './features/FeaturesContext';
 import { Features } from './features/types';
 
@@ -42,9 +41,6 @@ export const AppRouting = (props: WithFeaturesProps) => {
           <AuthenticatedRoute exact path="/ap/*" component={AccessPoint} />
           {features.ntp && (
           <AuthenticatedRoute exact path="/ntp/*" component={NetworkTime} />
-          )}
-          {features.mqtt && (
-            <AuthenticatedRoute exact path="/mqtt/*" component={Mqtt} />
           )}
           {features.security && (
             <AuthenticatedRoute exact path="/security/*" component={Security} />

@@ -1,12 +1,9 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { Typography, Box, List, ListItem, ListItemText } from '@material-ui/core';
 import { SectionContent } from '../components';
 
-class DemoInformation extends Component {
-
-  render() {
-    return (
-      <SectionContent title='Demo Information' titleGutter>
+const DemoInformation = () => {
+    return (<SectionContent title='Demo Information' titleGutter>
         <Typography variant="body1" paragraph>
           This simple demo project allows you to control the built-in LED.
           It demonstrates how the esp8266-react framework may be extended for your own IoT project.
@@ -69,9 +66,7 @@ class DemoInformation extends Component {
           </Typography>
         </Box>
       </SectionContent>
-    )
-  }
-
+    );
 }
 
 export default DemoInformation;

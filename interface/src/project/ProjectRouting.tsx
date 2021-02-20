@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { Redirect, Switch } from 'react-router';
 
 import { PROJECT_PATH } from '../api';
@@ -6,9 +6,7 @@ import { AuthenticatedRoute } from '../authentication';
 
 import DemoProject from './DemoProject';
 
-class ProjectRouting extends Component {
-
-  render() {
+const ProjectRouting = () => {
     return (
       <Switch>
         {
@@ -25,9 +23,7 @@ class ProjectRouting extends Component {
         }
         <Redirect to={`/${PROJECT_PATH}/demo/`} />
       </Switch>
-    )
-  }
-
+    );
 }
 
 export default ProjectRouting;

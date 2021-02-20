@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react';
+import React, { Fragment, useState } from 'react';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -28,103 +28,85 @@ dayjs.extend(UTC);
 
 type NTPStatusFormProps = RestFormProps<NTPStatus> & WithTheme & AuthenticatedContextProps;
 
-interface NTPStatusFormState {
-  settingTime: boolean;
-  localTime: string;
-  processing: boolean;
-}
+const NTPStatusForm = (props: NTPStatusFormProps) => {
 
-class NTPStatusForm extends Component<NTPStatusFormProps, NTPStatusFormState> {
+    const [settingTime, setSettingTime] = useState(false);
+    const [localTime, setLocalTime] = useState('');
+    const [processing, setProcessing] = useState(false);
 
-  constructor(props: NTPStatusFormProps) {
-    super(props);
-    this.state = {
-      settingTime: false,
-      localTime: '',
-      processing: false
-    };
-  }
+    const openSetTime = () => {
+        setLocalTime(formatLocalDateTime(dayjs()));
+        setSettingTime(true);
+    }
 
-  updateLocalTime = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ localTime: event.target.value });
-  }
+    const createAdjustedTime = (): Time => {
+        const currentLocalTime = dayjs(localTime);
+        return {
+            time_utc: currentLocalTime.utc().format("YYYY-MM-DDTHH:mm:ss[Z]")
+        };
+    }
 
-  openSetTime = () => {
-    this.setState({ localTime: formatLocalDateTime(dayjs()), settingTime: true, });
-  }
+    const { enqueueSnackbar, loadData } = props;
 
-  closeSetTime = () => {
-    this.setState({ settingTime: false });
-  }
+    const configureTime = () => {
+        setProcessing(true);
+        redirectingAuthorizedFetch(TIME_ENDPOINT,
+        {
+            method: 'POST',
+            body: JSON.stringify(createAdjustedTime()),
+            headers: {
+            'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.status === 200) {
+                enqueueSnackbar("Time set successfully", { variant: 'success' });
+                setSettingTime(false);
+                setProcessing(false);
+                loadData();
+            } else {
+                throw Error("Error setting time, status code: " + response.status);
+            }
+        })
+        .catch(error => {
+            enqueueSnackbar(error.message || "Problem setting the time", { variant: 'error' });
+            setSettingTime(false);
+            setProcessing(false);
+        });
+    }
 
-  createAdjustedTime = (): Time => {
-    const currentLocalTime = dayjs(this.state.localTime);
-    return {
-      time_utc: currentLocalTime.utc().format("YYYY-MM-DDTHH:mm:ss[Z]")
-    };
-  }
+    const setTimeDialog = <Dialog
+            open={settingTime}
+            onClose={() => setSettingTime(false)}
+        >
+            <DialogTitle>Set Time</DialogTitle>
+            <DialogContent dividers>
+            <Box mb={2}>Enter local date and time below to set the device's time.</Box>
+            <TextField
+                label="Local Time"
+                type="datetime-local"
+                value={localTime}
+                onChange={e => setLocalTime(e.target.value)}
+                disabled={processing}
+                variant="outlined"
+                fullWidth
+                InputLabelProps={{
+                shrink: true,
+                }}
+            />
+            </DialogContent>
+            <DialogActions>
+            <Button variant="contained" onClick={() => setSettingTime(false)} color="secondary">
+                Cancel
+            </Button>
+            <Button startIcon={<AccessTimeIcon />} variant="contained" onClick={configureTime} disabled={processing} color="primary" autoFocus>
+                Set Time
+            </Button>
+            </DialogActions>
+        </Dialog>;
 
-  configureTime = () => {
-    this.setState({ processing: true });
-    redirectingAuthorizedFetch(TIME_ENDPOINT,
-      {
-        method: 'POST',
-        body: JSON.stringify(this.createAdjustedTime()),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-      .then(response => {
-        if (response.status === 200) {
-          this.props.enqueueSnackbar("Time set successfully", { variant: 'success' });
-          this.setState({ processing: false, settingTime: false }, this.props.loadData);
-        } else {
-          throw Error("Error setting time, status code: " + response.status);
-        }
-      })
-      .catch(error => {
-        this.props.enqueueSnackbar(error.message || "Problem setting the time", { variant: 'error' });
-        this.setState({ processing: false, settingTime: false });
-      });
-  }
-
-  renderSetTimeDialog() {
-    return (
-      <Dialog
-        open={this.state.settingTime}
-        onClose={this.closeSetTime}
-      >
-        <DialogTitle>Set Time</DialogTitle>
-        <DialogContent dividers>
-          <Box mb={2}>Enter local date and time below to set the device's time.</Box>
-          <TextField
-            label="Local Time"
-            type="datetime-local"
-            value={this.state.localTime}
-            onChange={this.updateLocalTime}
-            disabled={this.state.processing}
-            variant="outlined"
-            fullWidth
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button variant="contained" onClick={this.closeSetTime} color="secondary">
-            Cancel
-          </Button>
-          <Button startIcon={<AccessTimeIcon />} variant="contained" onClick={this.configureTime} disabled={this.state.processing} color="primary" autoFocus>
-            Set Time
-          </Button>
-        </DialogActions>
-      </Dialog>
-    )
-  }
-
-  render() {
-    const { data, theme } = this.props
-    const me = this.props.authenticatedContext.me;
+    const { data, theme } = props;
+    const me = props.authenticatedContext.me;
     return (
       <Fragment>
         <List>
@@ -180,22 +162,21 @@ class NTPStatusForm extends Component<NTPStatusFormProps, NTPStatusFormState> {
         </List>
         <Box display="flex" flexWrap="wrap">
           <Box flexGrow={1} padding={1}>
-            <FormButton startIcon={<RefreshIcon />} variant="contained" color="secondary" onClick={this.props.loadData}>
+            <FormButton startIcon={<RefreshIcon />} variant="contained" color="secondary" onClick={props.loadData}>
               Refresh
             </FormButton>
           </Box>
           {me.admin && !isNtpActive(data) && (
             <Box flexWrap="none" padding={1} whiteSpace="nowrap">
-              <Button onClick={this.openSetTime} variant="contained" color="primary" startIcon={<AccessTimeIcon />}>
+              <Button onClick={openSetTime} variant="contained" color="primary" startIcon={<AccessTimeIcon />}>
                 Set Time
               </Button>
             </Box>
           )}
         </Box>
-        {this.renderSetTimeDialog()}
+        {setTimeDialog}
       </Fragment>
     );
-  }
 }
 
 export default withAuthenticatedContext(withTheme(NTPStatusForm));

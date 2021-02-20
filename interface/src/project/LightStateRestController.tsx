@@ -1,4 +1,4 @@
-import React, { Component, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { TextValidator, ValidatorForm } from 'react-material-ui-form-validator';
 
 import { Checkbox, Fab, Grid, IconButton, List, ListItem } from '@material-ui/core';
@@ -14,24 +14,21 @@ export const SCHEDULE_SETTINGS_ENDPOINT = ENDPOINT_ROOT + "schedule";
 
 type ScheduleRestControllerProps = RestControllerProps<Schedule>;
 
-class ScheduleRestController extends Component<ScheduleRestControllerProps> {
+const ScheduleRestController = (props: ScheduleRestControllerProps) => {
 
-  componentDidMount() {
-    this.props.loadData();
-  }
+    const { loadData } = props;
+    useEffect(loadData, [loadData]);
 
-  render() {
     return (
       <SectionContent title='Schedule' titleGutter>
         <RestFormLoader
-          {...this.props}
+          {...props}
           render={props => (
             <ScheduleRestControllerForm {...props} />
           )}
         />
       </SectionContent>
-    )
-  }
+    );
 
 }
 

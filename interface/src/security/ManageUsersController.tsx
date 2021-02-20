@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect } from 'react';
 
 import {restController, RestControllerProps, RestFormLoader, SectionContent } from '../components';
 import { SECURITY_SETTINGS_ENDPOINT } from '../api';
@@ -8,22 +8,19 @@ import { SecuritySettings } from './types';
 
 type ManageUsersControllerProps = RestControllerProps<SecuritySettings>;
 
-class ManageUsersController extends Component<ManageUsersControllerProps> {
+const ManageUsersController = (props: ManageUsersControllerProps) => {
 
-  componentDidMount() {
-    this.props.loadData();
-  }
+    const { loadData } = props;
+    useEffect(loadData, [loadData]);
 
-  render() {
     return (
       <SectionContent title="Manage Users" titleGutter>
         <RestFormLoader
-          {...this.props}
+          {...props}
           render={formProps => <ManageUsersForm {...formProps} />}
         />
       </SectionContent>
-    )
-  }
+    );
 
 }
 
