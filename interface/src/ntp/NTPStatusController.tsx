@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect } from 'react';
 
 import { restController, RestControllerProps, RestFormLoader, SectionContent } from '../components';
 import { NTP_STATUS_ENDPOINT } from '../api';
@@ -8,22 +8,19 @@ import { NTPStatus } from './types';
 
 type NTPStatusControllerProps = RestControllerProps<NTPStatus>;
 
-class NTPStatusController extends Component<NTPStatusControllerProps> {
+const NTPStatusController = (props : NTPStatusControllerProps) => {
 
-  componentDidMount() {
-    this.props.loadData();
-  }
+    const { loadData } = props;
+    useEffect(loadData, [loadData]);
 
-  render() {
     return (
       <SectionContent title="NTP Status">
         <RestFormLoader
-          {...this.props}
+          {...props}
           render={formProps => <NTPStatusForm {...formProps} />}
         />
       </SectionContent>
     );
-  }
 
 }
 

@@ -11,13 +11,11 @@ export const ApplicationContext = React.createContext(
 );
 
 export function withAuthenticatedContexApplicationContext<T extends ApplicationContext>(Component: React.ComponentType<T>) {
-  return class extends React.Component<Omit<T, keyof ApplicationContext>> {
-    render() {
+  return (props: Omit<T, keyof ApplicationContext>) => {
       return (
         <ApplicationContext.Consumer>
-          {authenticatedContext => <Component {...this.props as T} features={authenticatedContext} />}
+          {authenticatedContext => <Component {...props as T} features={authenticatedContext} />}
         </ApplicationContext.Consumer>
       );
-    }
   };
 }

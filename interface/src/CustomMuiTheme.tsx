@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 
 import { CssBaseline } from '@material-ui/core';
 import { MuiThemeProvider, createMuiTheme, StylesProvider } from '@material-ui/core/styles';
@@ -23,17 +23,15 @@ const theme = createMuiTheme({
   },
 });
 
-export default class CustomMuiTheme extends Component {
+export default (props: { children: React.ReactNode; }) => {
 
-  render() {
     return (
       <StylesProvider>
         <MuiThemeProvider theme={theme}>
           <CssBaseline />
-          {this.props.children}
+          {props.children}
         </MuiThemeProvider>
       </StylesProvider>
     );
-  }
 
 }

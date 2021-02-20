@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 
 import { Features } from './types';
 import { FeaturesContext } from './FeaturesContext';
@@ -6,43 +6,30 @@ import FullScreenLoading from '../components/FullScreenLoading';
 import ApplicationError from '../components/ApplicationError';
 import { FEATURES_ENDPOINT } from '../api';
 
-interface FeaturesWrapperState {
-  features?: Features;
-  error?: string;
-};
+const FeaturesWrapper : FC = props => {
 
-class FeaturesWrapper extends Component<{}, FeaturesWrapperState> {
+    const [features, setFeatures] = useState<Features | undefined>(undefined);
+    const [error, setError] = useState<string | undefined>(undefined);
 
-  state: FeaturesWrapperState = {};
+    useEffect(() => {
+        (async () => {
+            try {
+                const response = await fetch(FEATURES_ENDPOINT);
+                if(response.status === 200) {
+                    setFeatures(await response.json())
+                } else throw Error(`Unexpected status code: ${response.status}`);
+            } catch(error) {
+                setError(error.message);
+            }
+        })();
+    }, []);
 
-  componentDidMount() {
-    this.fetchFeaturesDetails();
-  }
-
-  fetchFeaturesDetails = () => {
-    fetch(FEATURES_ENDPOINT)
-      .then(response => {
-        if (response.status === 200) {
-          return response.json();
-        } else {
-          throw Error("Unexpected status code: " + response.status);
-        }
-      }).then(features => {
-        this.setState({ features });
-      })
-      .catch(error => {
-        this.setState({ error: error.message });
-      });
-  }
-
-  render() {
-    const { features, error } = this.state;
     if (features) {
       return (
         <FeaturesContext.Provider value={{
           features
         }}>
-          {this.props.children}
+          {props.children}
         </FeaturesContext.Provider>
       );
     }
@@ -54,7 +41,6 @@ class FeaturesWrapper extends Component<{}, FeaturesWrapperState> {
     return (
       <FullScreenLoading />
     );
-  }
 
 }
 

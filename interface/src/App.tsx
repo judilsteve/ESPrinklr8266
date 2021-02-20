@@ -1,4 +1,4 @@
-import React, { Component, RefObject } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Redirect, Route, Switch } from 'react-router';
 import { SnackbarProvider } from 'notistack';
 
@@ -13,38 +13,36 @@ import FeaturesWrapper from './features/FeaturesWrapper';
 // this redirect forces a call to authenticationContext.refresh() which invalidates the JWT if it is invalid.
 const unauthorizedRedirect = () => <Redirect to="/" />;
 
-class App extends Component {
+const App = () => {
 
-  notistackRef: RefObject<any> = React.createRef();
+    const notistackRef = useRef<any>(null);
 
-  componentDidMount() {
-    document.title = PROJECT_NAME;
-  }
+    useEffect(() => {
+        document.title = PROJECT_NAME;
+    }, []);
 
-  onClickDismiss = (key: string | number | undefined) => () => {
-    this.notistackRef.current.closeSnackbar(key);
-  }
+    const onClickDismiss = (key: string | number | undefined) => () => {
+        notistackRef.current?.closeSnackbar(key);
+    }
 
-  render() {
     return (
-      <CustomMuiTheme>
+        <CustomMuiTheme>
         <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-          ref={this.notistackRef}
-          action={(key) => (
-            <IconButton onClick={this.onClickDismiss(key)} size="small">
-              <CloseIcon />
+            ref={notistackRef}
+            action={(key) => (
+            <IconButton onClick={onClickDismiss(key)} size="small">
+                <CloseIcon />
             </IconButton>
-          )}>
-          <FeaturesWrapper>
+            )}>
+            <FeaturesWrapper>
             <Switch>
-              <Route exact path="/unauthorized" component={unauthorizedRedirect} />
-              <Route component={AppRouting} />
+                <Route exact path="/unauthorized" component={unauthorizedRedirect} />
+                <Route component={AppRouting} />
             </Switch>
-          </FeaturesWrapper>
+            </FeaturesWrapper>
         </SnackbarProvider>
-      </CustomMuiTheme>
+        </CustomMuiTheme>
     );
-  }
 }
 
 export default App

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TextValidator, ValidatorComponentProps } from 'react-material-ui-form-validator';
 
 import { withStyles, WithStyles, createStyles } from '@material-ui/core/styles';
@@ -15,43 +15,33 @@ const styles = createStyles({
 
 type PasswordValidatorProps = WithStyles<typeof styles> & Exclude<ValidatorComponentProps, "type" | "InputProps">;
 
-interface PasswordValidatorState {
-  showPassword: boolean;
-}
+const PasswordValidator = (props: PasswordValidatorProps) => {
 
-class PasswordValidator extends React.Component<PasswordValidatorProps, PasswordValidatorState> {
+    const [showPassword, setShowPassword] = useState(false);
 
-  state = {
-    showPassword: false
-  };
+    const toggleShowPassword = () => {
+        setShowPassword(!showPassword);
+    }
 
-  toggleShowPassword = () => {
-    this.setState({
-      showPassword: !this.state.showPassword
-    });
-  }
-
-  render() {
-    const { classes, ...rest } = this.props;
+    const { classes, ...rest } = props;
     return (
       <TextValidator
         {...rest}
-        type={this.state.showPassword ? 'text' : 'password'}
+        type={showPassword ? 'text' : 'password'}
         InputProps={{
           classes,
           endAdornment:
             <InputAdornment position="end">
               <IconButton
                 aria-label="Toggle password visibility"
-                onClick={this.toggleShowPassword}
+                onClick={toggleShowPassword}
               >
-                {this.state.showPassword ? <Visibility /> : <VisibilityOff />}
+                {showPassword ? <Visibility /> : <VisibilityOff />}
               </IconButton>
             </InputAdornment>
         }}
       />
     );
-  }
 
 }
 

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect } from 'react';
 
 import {restController, RestControllerProps, RestFormLoader, SectionContent } from '../components';
 import { AP_STATUS_ENDPOINT } from '../api';
@@ -8,22 +8,20 @@ import { APStatus } from './types';
 
 type APStatusControllerProps = RestControllerProps<APStatus>;
 
-class APStatusController extends Component<APStatusControllerProps> {
+const APStatusController = (props: APStatusControllerProps) => {
 
-  componentDidMount() {
-    this.props.loadData();
-  }
+    const { loadData } = props;
 
-  render() {
+    useEffect(loadData, [loadData]);
+
     return (
       <SectionContent title="Access Point Status">
         <RestFormLoader
-          {...this.props}
+          {...props}
           render={formProps => <APStatusForm {...formProps} />}
         />
       </SectionContent>
-    )
-  }
+    );
 }
 
 export default restController(AP_STATUS_ENDPOINT, APStatusController);

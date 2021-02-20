@@ -15,13 +15,11 @@ export interface WithFeaturesProps {
 }
 
 export function withFeatures<T extends WithFeaturesProps>(Component: React.ComponentType<T>) {
-  return class extends React.Component<Omit<T, keyof WithFeaturesProps>> {
-    render() {
+  return (props : Omit<T, keyof WithFeaturesProps>) => {
       return (
         <FeaturesContext.Consumer>
-          {featuresContext => <Component {...this.props as T} features={featuresContext.features} />}
+          {featuresContext => <Component {...props as T} features={featuresContext.features} />}
         </FeaturesContext.Consumer>
       );
-    }
   };
 }

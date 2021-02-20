@@ -22,15 +22,10 @@ export interface AuthenticationContextProps {
 }
 
 export function withAuthenticationContext<T extends AuthenticationContextProps>(Component: React.ComponentType<T>) {
-  return class extends React.Component<Omit<T, keyof AuthenticationContextProps>> {
-    render() {
-      return (
-        <AuthenticationContext.Consumer>
-          {authenticationContext => <Component {...this.props as T} authenticationContext={authenticationContext} />}
-        </AuthenticationContext.Consumer>
-      );
-    }
-  };
+    return (props: Omit<T, keyof AuthenticationContextProps>) =>
+        (<AuthenticationContext.Consumer>
+            {authenticationContext => <Component {...props as T} authenticationContext={authenticationContext} />}
+        </AuthenticationContext.Consumer>);
 }
 
 export interface AuthenticatedContext extends AuthenticationContext {
@@ -47,13 +42,8 @@ export interface AuthenticatedContextProps {
 }
 
 export function withAuthenticatedContext<T extends AuthenticatedContextProps>(Component: React.ComponentType<T>) {
-  return class extends React.Component<Omit<T, keyof AuthenticatedContextProps>> {
-    render() {
-      return (
-        <AuthenticatedContext.Consumer>
-          {authenticatedContext => <Component {...this.props as T} authenticatedContext={authenticatedContext} />}
-        </AuthenticatedContext.Consumer>
-      );
-    }
-  };
+    return (props: Omit<T, keyof AuthenticatedContextProps>) => 
+        (<AuthenticatedContext.Consumer>
+          {authenticatedContext => <Component {...props as T} authenticatedContext={authenticatedContext} />}
+        </AuthenticatedContext.Consumer>);
 }

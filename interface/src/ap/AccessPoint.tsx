@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { Redirect, Switch, RouteComponentProps } from 'react-router-dom'
 
 import { Tabs, Tab } from '@material-ui/core';
@@ -11,28 +11,26 @@ import APStatusController from './APStatusController';
 
 type AccessPointProps = AuthenticatedContextProps & RouteComponentProps;
 
-class AccessPoint extends Component<AccessPointProps> {
+const AccessPoint = (props :AccessPointProps) => {
 
-  handleTabChange = (event: React.ChangeEvent<{}>, path: string) => {
-    this.props.history.push(path);
-  };
+    const handleTabChange = (event: React.ChangeEvent<{}>, path: string) => {
+        props.history.push(path);
+    };
 
-  render() {
-    const { authenticatedContext } = this.props;
+    const { authenticatedContext } = props;
     return (
-      <MenuAppBar sectionTitle="Access Point">
-        <Tabs value={this.props.match.url} onChange={this.handleTabChange} variant="fullWidth">
-          <Tab value="/ap/status" label="Access Point Status" />
-          <Tab value="/ap/settings" label="Access Point Settings" disabled={!authenticatedContext.me.admin} />
+        <MenuAppBar sectionTitle="Access Point">
+        <Tabs value={props.match.url} onChange={handleTabChange} variant="fullWidth">
+            <Tab value="/ap/status" label="Access Point Status" />
+            <Tab value="/ap/settings" label="Access Point Settings" disabled={!authenticatedContext.me.admin} />
         </Tabs>
         <Switch>
-          <AuthenticatedRoute exact path="/ap/status" component={APStatusController} />
-          <AuthenticatedRoute exact path="/ap/settings" component={APSettingsController} />
-          <Redirect to="/ap/status" />
+            <AuthenticatedRoute exact path="/ap/status" component={APStatusController} />
+            <AuthenticatedRoute exact path="/ap/settings" component={APSettingsController} />
+            <Redirect to="/ap/status" />
         </Switch>
-      </MenuAppBar>
-    )
-  }
+        </MenuAppBar>
+    );
 }
 
 export default withAuthenticatedContext(AccessPoint);

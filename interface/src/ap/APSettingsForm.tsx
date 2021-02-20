@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React, { Fragment, useEffect } from 'react';
 import { TextValidator, ValidatorForm, SelectValidator } from 'react-material-ui-form-validator';
 
 import MenuItem from '@material-ui/core/MenuItem';
@@ -12,16 +12,17 @@ import { isIP } from '../validators';
 
 type APSettingsFormProps = RestFormProps<APSettings>;
 
-class APSettingsForm extends React.Component<APSettingsFormProps> {
+const APSettingsForm = (props: APSettingsFormProps) => {
 
-  componentWillMount() {
-    ValidatorForm.addValidationRule('isIP', isIP);
-  }
+    useEffect(() => {
+        const name = 'isIP';
+        ValidatorForm.addValidationRule(name, isIP);
+        return () => ValidatorForm.removeValidationRule(name);
+    }, []);
 
-  render() {
-    const { data, handleValueChange, saveData } = this.props;
+    const { data, handleValueChange, saveData } = props;
     return (
-      <ValidatorForm onSubmit={saveData} ref="APSettingsForm">
+      <ValidatorForm onSubmit={saveData}>
         <SelectValidator name="provision_mode"
           label="Provide Access Point&hellip;"
           value={data.provision_mode}
@@ -100,7 +101,7 @@ class APSettingsForm extends React.Component<APSettingsFormProps> {
         </FormActions>
       </ValidatorForm>
     );
-  }
+
 }
 
 export default APSettingsForm;

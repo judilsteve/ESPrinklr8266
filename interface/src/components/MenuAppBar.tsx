@@ -1,4 +1,4 @@
-import React, { RefObject, Fragment } from 'react';
+import React, { Fragment, useState, useRef, FC } from 'react';
 import { Link, withRouter, RouteComponentProps } from 'react-router-dom';
 
 import { Drawer, AppBar, Toolbar, Avatar, Divider, Button, Box, IconButton } from '@material-ui/core';
@@ -78,46 +78,36 @@ const styles = (theme: Theme) => createStyles({
   },
 });
 
-interface MenuAppBarState {
-  mobileOpen: boolean;
-  authMenuOpen: boolean;
-}
-
 interface MenuAppBarProps extends WithFeaturesProps, AuthenticatedContextProps, WithTheme, WithStyles<typeof styles>, RouteComponentProps {
   sectionTitle: string;
 }
 
-class MenuAppBar extends React.Component<MenuAppBarProps, MenuAppBarState> {
+export const MenuAppBar : FC<MenuAppBarProps> = props => {
 
-  constructor(props: MenuAppBarProps) {
-    super(props);
-    this.state = {
-      mobileOpen: false,
-      authMenuOpen: false
+    const [authMenuOpen, setAuthMenuOpen] = useState(false);
+
+    const handleToggle = () => {
+        setAuthMenuOpen(!authMenuOpen);
     };
-  }
 
-  anchorRef: RefObject<HTMLButtonElement> = React.createRef();
+    const anchorRef = useRef<HTMLButtonElement>(null);
 
-  handleToggle = () => {
-    this.setState({ authMenuOpen: !this.state.authMenuOpen });
-  }
-
-  handleClose = (event: React.MouseEvent<Document>) => {
-    if (this.anchorRef.current && this.anchorRef.current.contains(event.currentTarget)) {
-      return;
+    const handleClose = (event: React.MouseEvent<Document>) => {
+        if (anchorRef.current && anchorRef.current?.contains(event.currentTarget)) {
+            return;
+        }
+        setAuthMenuOpen(false);
     }
-    this.setState({ authMenuOpen: false });
-  }
 
-  handleDrawerToggle = () => {
-    this.setState({ mobileOpen: !this.state.mobileOpen });
-  };
+    const [mobileOpen, setMobileOpen] = useState(false);
 
-  render() {
-    const { classes, theme, children, sectionTitle, authenticatedContext, features } = this.props;
-    const { mobileOpen, authMenuOpen } = this.state;
-    const path = this.props.match.url;
+    const handleDrawerToggle = () => {
+        setMobileOpen(!mobileOpen);
+    };
+
+    const { classes, theme, children, sectionTitle, authenticatedContext, features } = props;
+    const path = props.match.url;
+
     const drawer = (
       <div>
         <Toolbar>
@@ -185,16 +175,16 @@ class MenuAppBar extends React.Component<MenuAppBarProps, MenuAppBarState> {
     const userMenu = (
       <div>
         <IconButton
-          ref={this.anchorRef}
+          ref={anchorRef}
           aria-owns={authMenuOpen ? 'menu-list-grow' : undefined}
           aria-haspopup="true"
-          onClick={this.handleToggle}
+          onClick={handleToggle}
           color="inherit"
         >
           <AccountCircleIcon />
         </IconButton>
-        <Popper open={authMenuOpen} anchorEl={this.anchorRef.current} transition className={classes.authMenu}>
-          <ClickAwayListener onClickAway={this.handleClose}>
+        <Popper open={authMenuOpen} anchorEl={anchorRef.current} transition className={classes.authMenu}>
+          <ClickAwayListener onClickAway={handleClose}>
             <Card id="menu-list-grow">
               <CardContent>
                 <List disablePadding>
@@ -226,7 +216,7 @@ class MenuAppBar extends React.Component<MenuAppBarProps, MenuAppBarState> {
               color="inherit"
               aria-label="Open drawer"
               edge="start"
-              onClick={this.handleDrawerToggle}
+              onClick={handleDrawerToggle}
               className={classes.menuButton}
             >
               <MenuIcon />
@@ -243,7 +233,7 @@ class MenuAppBar extends React.Component<MenuAppBarProps, MenuAppBarState> {
               variant="temporary"
               anchor={theme.direction === 'rtl' ? 'right' : 'left'}
               open={mobileOpen}
-              onClose={this.handleDrawerToggle}
+              onClose={handleDrawerToggle}
               classes={{
                 paper: classes.drawerPaper,
               }}
@@ -272,7 +262,6 @@ class MenuAppBar extends React.Component<MenuAppBarProps, MenuAppBarState> {
         </main>
       </div>
     );
-  }
 }
 
 export default withRouter(

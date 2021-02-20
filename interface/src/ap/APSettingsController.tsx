@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect } from 'react';
 
 import { AP_SETTINGS_ENDPOINT } from '../api';
 import {restController, RestControllerProps, RestFormLoader, SectionContent } from '../components';
@@ -8,22 +8,20 @@ import { APSettings } from './types';
 
 type APSettingsControllerProps = RestControllerProps<APSettings>;
 
-class APSettingsController extends Component<APSettingsControllerProps> {
+const APSettingsController = (props: APSettingsControllerProps) => {
 
-  componentDidMount() {
-    this.props.loadData();
-  }
+    const { loadData } = props;
 
-  render() {
+    useEffect(loadData, [loadData]);
+
     return (
-      <SectionContent title="Access Point Settings" titleGutter>
+    <SectionContent title="Access Point Settings" titleGutter>
         <RestFormLoader
-          {...this.props}
-          render={formProps => <APSettingsForm {...formProps} />}
+        {...props}
+        render={formProps => <APSettingsForm {...formProps} />}
         />
-      </SectionContent>
-    )
-  }
+    </SectionContent>
+    );
 
 }
 

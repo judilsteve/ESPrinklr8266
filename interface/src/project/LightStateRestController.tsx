@@ -1,13 +1,14 @@
 import React, { Component, useState } from 'react';
 import { TextValidator, ValidatorForm } from 'react-material-ui-form-validator';
 
-import { Checkbox, Grid, List, ListItem } from '@material-ui/core';
+import { Checkbox, Fab, Grid, IconButton, List, ListItem } from '@material-ui/core';
 import SaveIcon from '@material-ui/icons/Save';
 
 import { ENDPOINT_ROOT } from '../api';
 import { restController, RestControllerProps, RestFormLoader, RestFormProps, FormActions, FormButton, SectionContent } from '../components';
 
 import Schedule, { ScheduledStation } from './types/Schedule';
+import { Add, Delete } from '@material-ui/icons';
 
 export const SCHEDULE_SETTINGS_ENDPOINT = ENDPOINT_ROOT + "schedule";
 
@@ -83,6 +84,14 @@ const ScheduleRestControllerForm = (props: ScheduleFormProps) => {
 
   const [stations, setStations] = useState(makeStationFormValues(data.stations));
 
+  const addStation = () => {
+    setStations([...stations, { name: '', pin: '', durationSeconds: '' }]);
+  };
+
+  const deleteStation = (stationIndex: number) => {
+    setStations(stations.filter((_, i) => i !== stationIndex));
+  }
+
   const renameStation = (stationIndex: number, newName: string) => {
     console.debug(newName);
     const station = stations[stationIndex];
@@ -111,8 +120,6 @@ const ScheduleRestControllerForm = (props: ScheduleFormProps) => {
     }
   };
 
-  console.debug(stations);
-
   return (
     <ValidatorForm onSubmit={saveData}>
       <SectionContent title='Quick Actions' titleGutter>
@@ -133,7 +140,7 @@ const ScheduleRestControllerForm = (props: ScheduleFormProps) => {
       <SectionContent title='Start Time' titleGutter>
           TODO_JU Start Time
       </SectionContent>
-      <SectionContent title='Stations' titleGutter>
+      <SectionContent title='Stations' titleGutter>{/* TODO_JU Cards to delimit each station? */}
           <List>
               {
                   stations.map((s, i) => <ListItem key={i}>
@@ -150,7 +157,7 @@ const ScheduleRestControllerForm = (props: ScheduleFormProps) => {
                                 validators={['required']}
                                 errorMessages={['A name is required']}/>
                         </Grid>
-                        <Grid item xs={12} lg={3}>
+                        <Grid item xs={12} lg={4}>
                             <TextValidator
                                 label="Duration (seconds)"
                                 fullWidth
@@ -174,12 +181,19 @@ const ScheduleRestControllerForm = (props: ScheduleFormProps) => {
                                 validators={['required', 'isNumber', 'isPositive']}
                                 errorMessages={['A pin is required', 'Pin must be a whole number', 'Pin must be positive']}/>
                         </Grid>
-                        <Grid item xs={12} lg={2}>
-                            TODO_JU Add/Delete station buttons
+                        <Grid item xs={12} lg={1}>
+                            <IconButton disabled={stations.length === 1} onClick={() => deleteStation(i)}>
+                                <Delete />
+                            </IconButton>
                         </Grid>
                       </Grid>
                   </ListItem>)
               }
+              <ListItem>
+                <Fab color="primary" onClick={addStation}>
+                    <Add />
+                </Fab>
+              </ListItem>
           </List>
       </SectionContent>
       * Value is required

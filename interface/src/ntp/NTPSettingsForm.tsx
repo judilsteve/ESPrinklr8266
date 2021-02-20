@@ -1,34 +1,34 @@
-import React from 'react';
-import { TextValidator, ValidatorForm, SelectValidator } from 'react-material-ui-form-validator';
+import React, { useEffect } from 'react';
+import { SelectValidator, TextValidator, ValidatorForm } from 'react-material-ui-form-validator';
 
-import { Checkbox, MenuItem } from '@material-ui/core';
 import SaveIcon from '@material-ui/icons/Save';
-
-import { RestFormProps, FormActions, FormButton, BlockFormControlLabel } from '../components';
+import { BlockFormControlLabel, FormActions, FormButton, RestFormProps } from '../components';
 import { isIP, isHostname, or } from '../validators';
 
 import { TIME_ZONES, timeZoneSelectItems, selectedTimeZone } from './TZ';
 import { NTPSettings } from './types';
+import { Checkbox, MenuItem } from '@material-ui/core';
 
 type NTPSettingsFormProps = RestFormProps<NTPSettings>;
 
-class NTPSettingsForm extends React.Component<NTPSettingsFormProps> {
+const NTPSettingsForm = (props : NTPSettingsFormProps) => {
 
-  componentDidMount() {
-    ValidatorForm.addValidationRule('isIPOrHostname', or(isIP, isHostname));
-  }
+    useEffect(() => {
+        const ruleName = 'isIPOrHostname';
+        ValidatorForm.addValidationRule(ruleName, or(isIP, isHostname));
+        return () => ValidatorForm.removeValidationRule(ruleName);
+    }, []);
 
-  changeTimeZone = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const { data, setData } = this.props;
-    setData({
-      ...data,
-      tz_label: event.target.value,
-      tz_format: TIME_ZONES[event.target.value]
-    });
-  }
+    const changeTimeZone = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const { data, setData } = props;
+        setData({
+            ...data,
+            tz_label: event.target.value,
+            tz_format: TIME_ZONES[event.target.value]
+        });
+    }
 
-  render() {
-    const { data, handleValueChange, saveData } = this.props;
+    const { data, handleValueChange, saveData } = props;
     return (
       <ValidatorForm onSubmit={saveData}>
         <BlockFormControlLabel
@@ -61,7 +61,7 @@ class NTPSettingsForm extends React.Component<NTPSettingsFormProps> {
           variant="outlined"
           native="true"
           value={selectedTimeZone(data.tz_label, data.tz_format)}
-          onChange={this.changeTimeZone}
+          onChange={changeTimeZone}
           margin="normal"
         >
           <MenuItem disabled>Time zone...</MenuItem>
@@ -74,7 +74,6 @@ class NTPSettingsForm extends React.Component<NTPSettingsFormProps> {
         </FormActions>
       </ValidatorForm>
     );
-  }
 }
 
 export default NTPSettingsForm;

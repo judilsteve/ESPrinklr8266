@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect } from 'react';
 import { Switch, Redirect } from 'react-router';
 
 import * as Authentication from './authentication/Authentication';
@@ -21,14 +21,14 @@ import { Features } from './features/types';
 
 export const getDefaultRoute = (features: Features) => features.project ? `/${PROJECT_PATH}/` : "/wifi/";
 
-class AppRouting extends Component<WithFeaturesProps> {
+export const AppRouting = (props: WithFeaturesProps) => {
 
-  componentDidMount() {
-    Authentication.clearLoginRedirect();
-  }
+    const { features } = props;
 
-  render() {
-    const { features } = this.props;
+    useEffect(() => {
+        Authentication.clearLoginRedirect();
+    }, []);
+
     return (
       <AuthenticationWrapper>
         <Switch>
@@ -53,8 +53,7 @@ class AppRouting extends Component<WithFeaturesProps> {
           <Redirect to={getDefaultRoute(features)} />
         </Switch>
       </AuthenticationWrapper>
-    )
-  }
+    );
 }
 
 export default withFeatures(AppRouting);

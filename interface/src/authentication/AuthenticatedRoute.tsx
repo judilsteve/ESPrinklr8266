@@ -13,11 +13,11 @@ interface AuthenticatedRouteProps extends RouteProps, WithSnackbarProps, Authent
 
 type RenderComponent = (props: RouteComponentProps<any>) => React.ReactNode;
 
-export class AuthenticatedRoute extends React.Component<AuthenticatedRouteProps> {
+export const AuthenticatedRoute = (props: AuthenticatedRouteProps) => {
 
-  render() {
-    const { enqueueSnackbar, authenticationContext, component: Component, ...rest } = this.props;
-    const { location } = this.props;
+    const { enqueueSnackbar, authenticationContext, component: Component, ...rest } = props;
+    const { location } = props;
+
     const renderComponent: RenderComponent = (props) => {
       if (authenticationContext.me) {
         return (
@@ -32,10 +32,10 @@ export class AuthenticatedRoute extends React.Component<AuthenticatedRouteProps>
         <Redirect to='/' />
       );
     }
+
     return (
       <Route {...rest} render={renderComponent} />
     );
-  }
 
 }
 

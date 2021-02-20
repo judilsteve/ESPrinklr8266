@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect } from 'react';
 
 import {restController, RestControllerProps, RestFormLoader, SectionContent } from '../components';
 import { NTP_SETTINGS_ENDPOINT } from '../api';
@@ -8,22 +8,20 @@ import { NTPSettings } from './types';
 
 type NTPSettingsControllerProps = RestControllerProps<NTPSettings>;
 
-class NTPSettingsController extends Component<NTPSettingsControllerProps> {
+const NTPSettingsController = (props: NTPSettingsControllerProps) => {
 
-  componentDidMount() {
-    this.props.loadData();
-  }
+    const { loadData } = props;
 
-  render() {
+    useEffect(loadData, [loadData]);
+
     return (
       <SectionContent title="NTP Settings" titleGutter>
         <RestFormLoader
-          {...this.props}
+          {...props}
           render={formProps => <NTPSettingsForm {...formProps} />}
         />
       </SectionContent>
-    )
-  }
+    );
 
 }
 

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import { withSnackbar, WithSnackbarProps } from 'notistack';
 import { TextValidator, ValidatorForm } from 'react-material-ui-form-validator';
 
@@ -41,69 +41,47 @@ const styles = (theme: Theme) => createStyles({
 
 type SignInProps = WithSnackbarProps & WithStyles<typeof styles> & AuthenticationContextProps;
 
-interface SignInState {
-  username: string,
-  password: string,
-  processing: boolean
-}
+const SignIn = (props: SignInProps) => {
 
-class SignIn extends Component<SignInProps, SignInState> {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [processing, setProcessing] = useState(false);
 
-  constructor(props: SignInProps) {
-    super(props);
-    this.state = {
-      username: '',
-      password: '',
-      processing: false
-    };
-  }
+  const onSubmit = async () => {
+    const { authenticationContext } = props;
+    setProcessing(true);
 
-  updateInputElement = (event: React.ChangeEvent<HTMLInputElement>): void => {
-    const { name, value } = event.currentTarget;
-    this.setState(prevState => ({
-      ...prevState,
-      [name]: value,
-    }))
-  };
-
-  onSubmit = () => {
-    const { username, password } = this.state;
-    const { authenticationContext } = this.props;
-    this.setState({ processing: true });
-    fetch(SIGN_IN_ENDPOINT, {
-      method: 'POST',
-      body: JSON.stringify({ username, password }),
-      headers: new Headers({
-        'Content-Type': 'application/json'
-      })
-    })
-      .then(response => {
-        if (response.status === 200) {
-          return response.json();
-        } else if (response.status === 401) {
-          throw Error("Invalid credentials.");
-        } else {
-          throw Error("Invalid status code: " + response.status);
-        }
-      }).then(json => {
-        authenticationContext.signIn(json.access_token);
-      })
-      .catch(error => {
-        this.props.enqueueSnackbar(error.message, {
-          variant: 'warning',
+    try {
+        const response = await fetch(SIGN_IN_ENDPOINT, {
+            method: 'POST',
+            body: JSON.stringify({ username, password }),
+            headers: new Headers({
+              'Content-Type': 'application/json'
+            })
         });
-        this.setState({ processing: false });
-      });
+        if (response.status === 200) {
+            const json = await response.json();
+            authenticationContext.signIn(json.access_token);
+        } else if (response.status === 401) {
+            throw Error("Invalid credentials.");
+        } else {
+            throw Error("Invalid status code: " + response.status);
+        }
+    } catch(error) {
+        props.enqueueSnackbar(error.message, {
+            variant: 'warning',
+        });
+        setProcessing(false);
+    }
   };
 
-  render() {
-    const { username, password, processing } = this.state;
-    const { classes } = this.props;
+  const { classes } = props;
+
     return (
       <div className={classes.signInPage}>
         <Paper className={classes.signInPanel}>
           <Typography variant="h4">{PROJECT_NAME}</Typography>
-          <ValidatorForm onSubmit={this.onSubmit}>
+          <ValidatorForm onSubmit={onSubmit}>
             <TextValidator
               disabled={processing}
               validators={['required']}
@@ -113,7 +91,7 @@ class SignIn extends Component<SignInProps, SignInState> {
               fullWidth
               variant="outlined"
               value={username}
-              onChange={this.updateInputElement}
+              onChange={e => setUsername((e as any).target.value as string)}
               margin="normal"
               inputProps={{
                 autoCapitalize: "none",
@@ -129,7 +107,7 @@ class SignIn extends Component<SignInProps, SignInState> {
               fullWidth
               variant="outlined"
               value={password}
-              onChange={this.updateInputElement}
+              onChange={(e: { target: { value: string; }; }) => setPassword(e.target.value as string)}
               margin="normal"
             />
             <Fab variant="extended" color="primary" className={classes.button} type="submit" disabled={processing}>
@@ -140,8 +118,6 @@ class SignIn extends Component<SignInProps, SignInState> {
         </Paper>
       </div>
     );
-  }
-
-}
+};
 
 export default withAuthenticationContext(withSnackbar(withStyles(styles)(SignIn)));
