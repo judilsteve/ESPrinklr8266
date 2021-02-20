@@ -1,4 +1,4 @@
-import React, { RefObject } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { TextValidator, ValidatorForm } from 'react-material-ui-form-validator';
 
 import { Dialog, DialogTitle, DialogContent, DialogActions, Checkbox } from '@material-ui/core';
@@ -12,26 +12,26 @@ interface UserFormProps {
   user: User;
   uniqueUsername: (value: any) => boolean;
   handleValueChange: (name: keyof User) => (event: React.ChangeEvent<HTMLInputElement>) => void;
+  handleCheckboxChange: (name: keyof User) => (event: React.ChangeEvent<HTMLInputElement>) => void;
   onDoneEditing: () => void;
   onCancelEditing: () => void;
 }
 
-class UserForm extends React.Component<UserFormProps> {
+const UserForm = (props: UserFormProps) => {
 
-  formRef: RefObject<any> = React.createRef();
+    const formRef = useRef<any>(null);
 
-  componentDidMount() {
-    ValidatorForm.addValidationRule('uniqueUsername', this.props.uniqueUsername);
-  }
+    const { uniqueUsername } = props;
 
-  submit = () => {
-    this.formRef.current.submit();
-  }
+    useEffect(() => {
+        const ruleName = 'uniqueUsername';
+        ValidatorForm.addValidationRule(ruleName, uniqueUsername);
+        return () => ValidatorForm.removeValidationRule(ruleName);
+    }, [uniqueUsername]);
 
-  render() {
-    const { user, creating, handleValueChange, onDoneEditing, onCancelEditing } = this.props;
+    const { user, creating, handleValueChange, handleCheckboxChange, onDoneEditing, onCancelEditing } = props;
     return (
-      <ValidatorForm onSubmit={onDoneEditing} ref={this.formRef}>
+      <ValidatorForm onSubmit={onDoneEditing} ref={formRef}>
         <Dialog onClose={onCancelEditing} aria-labelledby="user-form-dialog-title" open>
           <DialogTitle id="user-form-dialog-title">{creating ? 'Add' : 'Modify'} User</DialogTitle>
           <DialogContent dividers>
@@ -63,7 +63,7 @@ class UserForm extends React.Component<UserFormProps> {
                 <Checkbox
                   value="admin"
                   checked={user.admin}
-                  onChange={handleValueChange('admin')}
+                  onChange={handleCheckboxChange('admin')}
                 />
               }
               label="Admin?"
@@ -73,14 +73,13 @@ class UserForm extends React.Component<UserFormProps> {
             <FormButton variant="contained" color="secondary" onClick={onCancelEditing}>
               Cancel
             </FormButton>
-            <FormButton variant="contained" color="primary" type="submit" onClick={this.submit}>
+            <FormButton variant="contained" color="primary" type="submit" onClick={() => formRef.current?.submit()}>
               Done
             </FormButton>
           </DialogActions>
         </Dialog>
       </ValidatorForm>
     );
-  }
 }
 
 export default UserForm;

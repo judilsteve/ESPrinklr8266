@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect } from 'react';
 
 import {restController, RestControllerProps, RestFormLoader, SectionContent } from '../components';
 import { OTA_SETTINGS_ENDPOINT } from '../api';
@@ -8,22 +8,19 @@ import { OTASettings } from './types';
 
 type OTASettingsControllerProps = RestControllerProps<OTASettings>;
 
-class OTASettingsController extends Component<OTASettingsControllerProps> {
+const OTASettingsController = (props: OTASettingsControllerProps) => {
 
-  componentDidMount() {
-    this.props.loadData();
-  }
+    const { loadData } = props;
+    useEffect(loadData, [loadData]);
 
-  render() {
     return (
       <SectionContent title="OTA Settings" titleGutter>
         <RestFormLoader
-          {...this.props}
+          {...props}
           render={formProps => <OTASettingsForm {...formProps} />}
         />
       </SectionContent>
     );
-  }
 
 }
 

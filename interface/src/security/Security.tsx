@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { Redirect, Switch, RouteComponentProps } from 'react-router-dom'
 
 import { Tabs, Tab } from '@material-ui/core';
@@ -11,16 +11,15 @@ import SecuritySettingsController from './SecuritySettingsController';
 
 type SecurityProps = AuthenticatedContextProps & RouteComponentProps;
 
-class Security extends Component<SecurityProps> {
+const Security = (props: SecurityProps) => {
 
-  handleTabChange = (event: React.ChangeEvent<{}>, path: string) => {
-    this.props.history.push(path);
-  };
+    const handleTabChange = (event: React.ChangeEvent<{}>, path: string) => {
+        props.history.push(path);
+    };
 
-  render() {
     return (
       <MenuAppBar sectionTitle="Security">
-        <Tabs value={this.props.match.url} onChange={this.handleTabChange} variant="fullWidth">
+        <Tabs value={props.match.url} onChange={handleTabChange} variant="fullWidth">
           <Tab value="/security/users" label="Manage Users" />
           <Tab value="/security/settings" label="Security Settings" />
         </Tabs>
@@ -30,8 +29,7 @@ class Security extends Component<SecurityProps> {
           <Redirect to="/security/users" />
         </Switch>
       </MenuAppBar>
-    )
-  }
+    );
 }
 
 export default Security;

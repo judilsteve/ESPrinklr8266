@@ -11,17 +11,16 @@ import { SecuritySettings } from './types';
 
 type SecuritySettingsFormProps = RestFormProps<SecuritySettings> & AuthenticatedContextProps;
 
-class SecuritySettingsForm extends React.Component<SecuritySettingsFormProps> {
+const SecuritySettingsForm = (props: SecuritySettingsFormProps) => {
 
-  onSubmit = () => {
-    this.props.saveData();
-    this.props.authenticatedContext.refresh();
-  }
+    const onSubmit = () => {
+        props.saveData();
+        props.authenticatedContext.refresh();
+    }
 
-  render() {
-    const { data, handleValueChange } = this.props;
+    const { data, handleValueChange } = props;
     return (
-      <ValidatorForm onSubmit={this.onSubmit}>
+      <ValidatorForm onSubmit={onSubmit}>
         <PasswordValidator
           validators={['required', 'matchRegexp:^.{1,64}$']}
           errorMessages={['JWT Secret Required', 'JWT Secret must be 64 characters or less']}
@@ -45,7 +44,6 @@ class SecuritySettingsForm extends React.Component<SecuritySettingsFormProps> {
         </FormActions>
       </ValidatorForm>
     );
-  }
 
 }
 

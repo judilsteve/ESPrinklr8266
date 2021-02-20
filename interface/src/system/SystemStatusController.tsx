@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect } from 'react';
 
 import {restController, RestControllerProps, RestFormLoader, SectionContent } from '../components';
 import { SYSTEM_STATUS_ENDPOINT } from '../api';
@@ -8,22 +8,19 @@ import { SystemStatus } from './types';
 
 type SystemStatusControllerProps = RestControllerProps<SystemStatus>;
 
-class SystemStatusController extends Component<SystemStatusControllerProps> {
+const SystemStatusController = (props: SystemStatusControllerProps) => {
 
-  componentDidMount() {
-    this.props.loadData();
-  }
+    const { loadData } = props;
+    useEffect(loadData, [loadData]);
 
-  render() {
     return (
       <SectionContent title="System Status">
         <RestFormLoader
-          {...this.props}
+          {...props}
           render={formProps => <SystemStatusForm {...formProps} />}
         />
       </SectionContent>
     );
-  }
 
 }
 

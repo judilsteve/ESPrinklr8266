@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { TextValidator, ValidatorForm } from 'react-material-ui-form-validator';
 
 import { Checkbox } from '@material-ui/core';
@@ -11,14 +11,15 @@ import { OTASettings } from './types';
 
 type OTASettingsFormProps = RestFormProps<OTASettings>;
 
-class OTASettingsForm extends React.Component<OTASettingsFormProps> {
+const OTASettingsForm = (props: OTASettingsFormProps) => {
 
-  componentDidMount() {
-    ValidatorForm.addValidationRule('isIPOrHostname', or(isIP, isHostname));
-  }
+    useEffect(() => {
+        const ruleName = 'isIPOrHostname';
+        ValidatorForm.addValidationRule(ruleName, or(isIP, isHostname));
+        return () => ValidatorForm.removeValidationRule(ruleName);
+    }, []);
 
-  render() {
-    const { data, handleValueChange, saveData } = this.props;
+    const { data, handleValueChange, saveData } = props;
     return (
       <ValidatorForm onSubmit={saveData}>
         <BlockFormControlLabel
@@ -60,7 +61,6 @@ class OTASettingsForm extends React.Component<OTASettingsFormProps> {
         </FormActions>
       </ValidatorForm>
     );
-  }
 }
 
 export default OTASettingsForm;

@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React, { useState } from 'react';
 import { ValidatorForm } from 'react-material-ui-form-validator';
 
 import { Table, TableBody, TableCell, TableHead, TableFooter, TableRow, withWidth, WithWidthProps, isWidthDown } from '@material-ui/core';
@@ -30,87 +30,70 @@ function compareUsers(a: User, b: User) {
 
 type ManageUsersFormProps = RestFormProps<SecuritySettings> & AuthenticatedContextProps & WithWidthProps;
 
-type ManageUsersFormState = {
-  creating: boolean;
-  user?: User;
-}
+const ManageUsersForm = (props: ManageUsersFormProps) => {
 
-class ManageUsersForm extends React.Component<ManageUsersFormProps, ManageUsersFormState> {
+    const [creating, setCreating] = useState(false);
+    const [user, setUser] = useState<User | undefined>(undefined);
 
-  state: ManageUsersFormState = {
-    creating: false
-  };
+    const createUser = () => {
+        setCreating(true);
+        setUser({
+            username: '',
+            password: '',
+            admin: true
+        });
+    };
 
-  createUser = () => {
-    this.setState({
-      creating: true,
-      user: {
-        username: "",
-        password: "",
-        admin: true
-      }
-    });
-  };
-
-  uniqueUsername = (username: string) => {
-    return !this.props.data.users.find(u => u.username === username);
-  }
-
-  noAdminConfigured = () => {
-    return !this.props.data.users.find(u => u.admin);
-  }
-
-  removeUser = (user: User) => {
-    const { data } = this.props;
-    const users = data.users.filter(u => u.username !== user.username);
-    this.props.setData({ ...data, users });
-  }
-
-  startEditingUser = (user: User) => {
-    this.setState({
-      creating: false,
-      user
-    });
-  };
-
-  cancelEditingUser = () => {
-    this.setState({
-      user: undefined
-    });
-  }
-
-  doneEditingUser = () => {
-    const { user } = this.state;
-    if (user) {
-      const { data } = this.props;
-      const users = data.users.filter(u => u.username !== user.username);
-      users.push(user);
-      this.props.setData({ ...data, users });
-      this.setState({
-        user: undefined
-      });
+    const uniqueUsername = (username: string) => {
+        return !props.data.users.find(u => u.username === username);
     }
-  };
 
-  handleUserValueChange = (name: keyof User) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ user: { ...this.state.user!, [name]: event.target.value } });
-  };
+    const noAdminConfigured = !props.data.users.find(u => u.admin);
 
-  handleUserCheckboxChange = (name: keyof User) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ user: { ...this.state.user!, [name]: event.target.checked } });
-  }
+    const removeUser = (user: User) => {
+        const { data } = props;
+        const users = data.users.filter(u => u.username !== user.username);
+        props.setData({ ...data, users });
+    }
 
-  onSubmit = () => {
-    this.props.saveData();
-    this.props.authenticatedContext.refresh();
-  }
+    const startEditingUser = (toEdit: User) => {
+        setCreating(false);
+        setUser(toEdit);
+    };
 
-  render() {
-    const { width, data } = this.props;
-    const { user, creating } = this.state;
+    const cancelEditingUser = () => {
+        setUser(undefined);
+    }
+
+    const doneEditingUser = () => {
+        if (user) {
+            const { data } = props;
+            const users = data.users.filter(u => u.username !== user.username);
+            users.push(user);
+            props.setData({ ...data, users });
+            setUser(undefined);
+        }
+    };
+
+    const handleUserValueChange = (name: keyof User) => (event: React.ChangeEvent<HTMLInputElement>) => {
+        const newUser = { ...user, [name]: event.target.value };
+        setUser(newUser as User);
+    };
+
+    const handleUserCheckboxChange = (name: keyof User) => (event: React.ChangeEvent<HTMLInputElement>) => {
+        const newUser = { ...user, [name]: event.target.checked };
+        setUser(newUser as User);
+    }
+
+    const onSubmit = () => {
+        props.saveData();
+        props.authenticatedContext.refresh();
+    }
+
+    const { width, data } = props;
     return (
-      <Fragment>
-        <ValidatorForm onSubmit={this.onSubmit}>
+      <>
+        <ValidatorForm onSubmit={onSubmit}>
           <Table size="small" padding={isWidthDown('xs', width!) ? "none" : "default"}>
             <TableHead>
               <TableRow>
@@ -131,10 +114,10 @@ class ManageUsersForm extends React.Component<ManageUsersFormProps, ManageUsersF
                     }
                   </TableCell>
                   <TableCell align="center">
-                    <IconButton size="small" aria-label="Delete" onClick={() => this.removeUser(user)}>
+                    <IconButton size="small" aria-label="Delete" onClick={() => removeUser(user)}>
                       <DeleteIcon />
                     </IconButton>
-                    <IconButton size="small" aria-label="Edit" onClick={() => this.startEditingUser(user)}>
+                    <IconButton size="small" aria-label="Edit" onClick={() => startEditingUser(user)}>
                       <EditIcon />
                     </IconButton>
                   </TableCell>
@@ -145,7 +128,7 @@ class ManageUsersForm extends React.Component<ManageUsersFormProps, ManageUsersF
               <TableRow>
                 <TableCell colSpan={2} />
                 <TableCell align="center" padding="default">
-                  <Button startIcon={<PersonAddIcon />} variant="contained" color="secondary" onClick={this.createUser}>
+                  <Button startIcon={<PersonAddIcon />} variant="contained" color="secondary" onClick={createUser}>
                     Add
                   </Button>
                 </TableCell>
@@ -153,7 +136,7 @@ class ManageUsersForm extends React.Component<ManageUsersFormProps, ManageUsersF
             </TableFooter>
           </Table>
           {
-            this.noAdminConfigured() &&
+            noAdminConfigured &&
             (
               <Box bgcolor="error.main" color="error.contrastText" p={2} mt={2} mb={2}>
                 <Typography variant="body1">
@@ -163,7 +146,7 @@ class ManageUsersForm extends React.Component<ManageUsersFormProps, ManageUsersF
             )
           }
           <FormActions>
-            <FormButton startIcon={<SaveIcon />} variant="contained" color="primary" type="submit" disabled={this.noAdminConfigured()}>
+            <FormButton startIcon={<SaveIcon />} variant="contained" color="primary" type="submit" disabled={noAdminConfigured}>
               Save
             </FormButton>
           </FormActions>
@@ -173,15 +156,15 @@ class ManageUsersForm extends React.Component<ManageUsersFormProps, ManageUsersF
           <UserForm
             user={user}
             creating={creating}
-            onDoneEditing={this.doneEditingUser}
-            onCancelEditing={this.cancelEditingUser}
-            handleValueChange={this.handleUserValueChange}
-            uniqueUsername={this.uniqueUsername}
+            onDoneEditing={doneEditingUser}
+            onCancelEditing={cancelEditingUser}
+            handleValueChange={handleUserValueChange}
+            handleCheckboxChange={handleUserCheckboxChange}
+            uniqueUsername={uniqueUsername}
           />
         }
-      </Fragment>
+      </>
     );
-  }
 
 }
 
