@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect } from 'react';
 
 import {restController, RestControllerProps, RestFormLoader, SectionContent } from '../components';
 import WiFiStatusForm from './WiFiStatusForm';
@@ -7,22 +7,19 @@ import { WiFiStatus } from './types';
 
 type WiFiStatusControllerProps = RestControllerProps<WiFiStatus>;
 
-class WiFiStatusController extends Component<WiFiStatusControllerProps> {
+const WiFiStatusController = (props: WiFiStatusControllerProps) => {
 
-  componentDidMount() {
-    this.props.loadData();
-  }
+    const { loadData } = props;
+    useEffect(loadData, [loadData]);
 
-  render() {
     return (
       <SectionContent title="WiFi Status">
         <RestFormLoader
-          {...this.props}
+          {...props}
           render={formProps => <WiFiStatusForm {...formProps} />}
         />
       </SectionContent>
     );
-  }
 
 }
 

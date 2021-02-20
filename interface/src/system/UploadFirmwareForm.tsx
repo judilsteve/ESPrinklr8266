@@ -9,26 +9,24 @@ interface UploadFirmwareFormProps {
   onCancel: () => void;
 }
 
-class UploadFirmwareForm extends React.Component<UploadFirmwareFormProps> {
+const UploadFirmwareForm = (props : UploadFirmwareFormProps) => {
 
-  handleDrop = (files: File[]) => {
-    const file = files[0];
-    if (file) {
-      this.props.onFileSelected(files[0]);
-    }
-  };
+    const handleDrop = (files: File[]) => {
+        const file = files[0];
+        if (file) {
+            props.onFileSelected(files[0]);
+        }
+    };
 
-  render() {
-    const { uploading, progress, onCancel } = this.props;
+    const { uploading, progress, onCancel } = props;
     return (
       <Fragment>
         <Box py={2}>
           Upload a new firmware (.bin) file below to replace the existing firmware.
         </Box>
-        <SingleUpload accept="application/octet-stream" onDrop={this.handleDrop} uploading={uploading} progress={progress} onCancel={onCancel} />
+        <SingleUpload accept="application/octet-stream" onDrop={handleDrop} uploading={uploading} progress={progress} onCancel={onCancel} />
       </Fragment>
     );
-  }
 
 }
 
