@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { TextValidator, ValidatorForm } from 'react-material-ui-form-validator';
 
 import { Checkbox, Fab, Grid, IconButton, List, ListItem } from '@material-ui/core';
@@ -9,6 +9,9 @@ import { restController, RestControllerProps, RestFormLoader, RestFormProps, For
 
 import Schedule, { ScheduledStation } from './types/Schedule';
 import { Add, Delete } from '@material-ui/icons';
+import { TimePicker } from '@material-ui/pickers';
+import { MaterialUiPickersDate } from '@material-ui/pickers/typings/date';
+import dayjs from 'dayjs';
 
 export const SCHEDULE_SETTINGS_ENDPOINT = ENDPOINT_ROOT + "schedule";
 
@@ -117,6 +120,15 @@ const ScheduleRestControllerForm = (props: ScheduleFormProps) => {
     }
   };
 
+  const startTime = useMemo(() => dayjs(1000 * data.startOffsetFromMidnightSeconds).local(), [data.startOffsetFromMidnightSeconds]);
+
+  const setStartTime = (newStartTime: MaterialUiPickersDate) => {
+      if(newStartTime === null) return;
+      newStartTime = newStartTime.utc();
+      const startOffsetFromMidnightSeconds = newStartTime.hour() * 3600 + newStartTime.minute() * 60 + newStartTime.second();
+      setData({...data, startOffsetFromMidnightSeconds});
+  }
+
   return (
     <ValidatorForm onSubmit={saveData}>
       <SectionContent title='Quick Actions' titleGutter>
@@ -135,7 +147,7 @@ const ScheduleRestControllerForm = (props: ScheduleFormProps) => {
         </List>
       </SectionContent>
       <SectionContent title='Start Time' titleGutter>
-          TODO_JU Start Time
+        <TimePicker value={startTime} onChange={setStartTime} />
       </SectionContent>
       <SectionContent title='Stations' titleGutter>{/* TODO_JU Cards to delimit each station? */}
           <List>
@@ -152,7 +164,7 @@ const ScheduleRestControllerForm = (props: ScheduleFormProps) => {
                                 /* Typescript annotations for this component are bullshit, hence the "as any" */
                                 onChange={e => renameStation(i, (e as any).target.value as string)}
                                 validators={['required']}
-                                errorMessages={['A name is required']}/>
+                                errorMessages={['Name is required']}/>
                         </Grid>
                         <Grid item xs={12} lg={4}>
                             <TextValidator
@@ -164,7 +176,7 @@ const ScheduleRestControllerForm = (props: ScheduleFormProps) => {
                                 /* Typescript annotations for this component are bullshit, hence the "as any" */
                                 onChange={e => setStationDuration(i, (e as any).target.value as string)}
                                 validators={['required', 'isNumber', 'isPositive']}
-                                errorMessages={['A duration is required', 'Duration must be a whole number', 'Duration must be positive']}/>
+                                errorMessages={['Duration is required', 'Duration must be a whole number', 'Duration must be positive']}/>
                         </Grid>
                         <Grid item xs={12} lg={1}>
                             <TextValidator
@@ -176,7 +188,7 @@ const ScheduleRestControllerForm = (props: ScheduleFormProps) => {
                                 /* Typescript annotations for this component are bullshit, hence the "as any" */
                                 onChange={e => setStationPin(i, (e as any).target.value as string)}
                                 validators={['required', 'isNumber', 'isPositive']}
-                                errorMessages={['A pin is required', 'Pin must be a whole number', 'Pin must be positive']}/>
+                                errorMessages={['Pin is required', 'Pin must be a whole number', 'Pin must be positive']}/>
                         </Grid>
                         <Grid item xs={12} lg={1}>
                             <IconButton disabled={stations.length === 1} onClick={() => deleteStation(i)}>

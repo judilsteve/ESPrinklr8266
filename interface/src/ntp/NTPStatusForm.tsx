@@ -6,7 +6,7 @@ import UTC from 'dayjs/plugin/utc';
 
 import { WithTheme, withTheme } from '@material-ui/core/styles';
 import { Avatar, Divider, List, ListItem, ListItemAvatar, ListItemText, Button } from '@material-ui/core';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Box, TextField } from '@material-ui/core';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Box } from '@material-ui/core';
 
 import SwapVerticalCircleIcon from '@material-ui/icons/SwapVerticalCircle';
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
@@ -17,10 +17,10 @@ import RefreshIcon from '@material-ui/icons/Refresh';
 
 import { RestFormProps, FormButton, HighlightAvatar } from '../components';
 import { isNtpActive, ntpStatusHighlight, ntpStatus } from './NTPStatus';
-import { formatLocalDateTime } from './TimeFormat';
 import { NTPStatus, Time } from './types';
 import { redirectingAuthorizedFetch, withAuthenticatedContext, AuthenticatedContextProps } from '../authentication';
 import { TIME_ENDPOINT } from '../api';
+import { DateTimePicker } from '@material-ui/pickers';
 
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
@@ -31,18 +31,17 @@ type NTPStatusFormProps = RestFormProps<NTPStatus> & WithTheme & AuthenticatedCo
 const NTPStatusForm = (props: NTPStatusFormProps) => {
 
     const [settingTime, setSettingTime] = useState(false);
-    const [localTime, setLocalTime] = useState('');
+    const [localTime, setLocalTime] = useState(dayjs().local());
     const [processing, setProcessing] = useState(false);
 
     const openSetTime = () => {
-        setLocalTime(formatLocalDateTime(dayjs()));
+        setLocalTime(dayjs().local());
         setSettingTime(true);
     }
 
     const createAdjustedTime = (): Time => {
-        const currentLocalTime = dayjs(localTime);
         return {
-            time_utc: currentLocalTime.utc().format("YYYY-MM-DDTHH:mm:ss[Z]")
+            time_utc: localTime.local().format("YYYY-MM-DDTHH:mm:ss[Z]")
         };
     }
 
@@ -82,18 +81,7 @@ const NTPStatusForm = (props: NTPStatusFormProps) => {
             <DialogTitle>Set Time</DialogTitle>
             <DialogContent dividers>
             <Box mb={2}>Enter local date and time below to set the device's time.</Box>
-            <TextField
-                label="Local Time"
-                type="datetime-local"
-                value={localTime}
-                onChange={e => setLocalTime(e.target.value)}
-                disabled={processing}
-                variant="outlined"
-                fullWidth
-                InputLabelProps={{
-                shrink: true,
-                }}
-            />
+            <DateTimePicker value={localTime} onChange={newTime => newTime && setLocalTime(newTime)}/>
             </DialogContent>
             <DialogActions>
             <Button variant="contained" onClick={() => setSettingTime(false)} color="secondary">

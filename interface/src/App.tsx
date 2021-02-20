@@ -9,6 +9,8 @@ import AppRouting from './AppRouting';
 import CustomMuiTheme from './CustomMuiTheme';
 import { PROJECT_NAME } from './api';
 import FeaturesWrapper from './features/FeaturesWrapper';
+import { MuiPickersUtilsProvider } from '@material-ui/pickers';
+import DayJsFnsUtils from '@date-io/dayjs';
 
 // this redirect forces a call to authenticationContext.refresh() which invalidates the JWT if it is invalid.
 const unauthorizedRedirect = () => <Redirect to="/" />;
@@ -26,6 +28,7 @@ const App = () => {
     }
 
     return (
+        <MuiPickersUtilsProvider utils={DayJsFnsUtils}>
         <CustomMuiTheme>
         <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
             ref={notistackRef}
@@ -42,6 +45,7 @@ const App = () => {
             </FeaturesWrapper>
         </SnackbarProvider>
         </CustomMuiTheme>
+        </MuiPickersUtilsProvider>
     );
 }
 
