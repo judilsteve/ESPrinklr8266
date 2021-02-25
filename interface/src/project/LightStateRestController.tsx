@@ -168,7 +168,7 @@ const ScheduleRestControllerForm = (props: ScheduleFormProps) => {
                         </Grid>
                         <Grid item xs={12} lg={4}>
                             <TextValidator
-                                label="Duration (seconds)"
+                                label="Duration (seconds)" /* TODO_JU This should be minutes */
                                 fullWidth
                                 required
                                 name="duration"
