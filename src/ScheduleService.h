@@ -14,13 +14,13 @@ class Station {
     String Name;
     unsigned int DurationSeconds;
 
-    static void read(Station & station, JsonObject & root) {
+    static void read(Station const & station, JsonObject & root) {
         root["pin"] = station.Pin;
         root["name"] = station.Name;
         root["durationSeconds"] = station.DurationSeconds;
     }
 
-    static StateUpdateResult update(JsonObject & root, Station & station) {
+    static StateUpdateResult update(JsonObject const & root, Station & station) {
         auto result = StateUpdateResult::UNCHANGED;
 
         int const pin = root["pin"] | -1;
@@ -198,8 +198,6 @@ class ScheduleService : public StatefulService<Schedule> {
     private:
     HttpEndpoint<Schedule> httpEndpoint;
     FSPersistence<Schedule> fsPersistence;
-
-    void registerConfig();
 };
 
 #endif
