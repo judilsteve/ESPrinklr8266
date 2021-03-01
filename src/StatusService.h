@@ -14,35 +14,35 @@ enum SystemState {
     INVALID
 };
 
-SystemState parseSystemState(String const & stateString) {
-    if(stateString == "Idle") return Idle;
-    else if(stateString == "Testing") return Testing;
-    else if(stateString == "RunningManual") return RunningManual;
-    else if(stateString == "RunningScheduled") return RunningScheduled;
-    else if(stateString == "DisabledUntil") return DisabledUntil;
-    else return INVALID;
-}
-
-String serialiseSystemState(SystemState const & state) {
-    switch(state) {
-        case Idle: return "Idle";
-        case Testing: return "Testing";
-        case RunningManual: return "RunningManual";
-        case RunningScheduled: return "RunningScheduled";
-        case DisabledUntil: return "DisabledUntil";
-        case INVALID:
-        default:
-            return "INVALID";
-    };
-}
-
 class Status {
     public:
-    unsigned int ActivePin;
+    int ActivePin;
     String ActiveStation;
     long EnteredStateTime;
     long LeavingStateTime;
     SystemState State;
+
+    static SystemState parseSystemState(String const & stateString) {
+        if(stateString == "Idle") return Idle;
+        else if(stateString == "Testing") return Testing;
+        else if(stateString == "RunningManual") return RunningManual;
+        else if(stateString == "RunningScheduled") return RunningScheduled;
+        else if(stateString == "DisabledUntil") return DisabledUntil;
+        else return INVALID;
+    }
+
+    static String serialiseSystemState(SystemState const & state) {
+        switch(state) {
+            case Idle: return "Idle";
+            case Testing: return "Testing";
+            case RunningManual: return "RunningManual";
+            case RunningScheduled: return "RunningScheduled";
+            case DisabledUntil: return "DisabledUntil";
+            case INVALID:
+            default:
+                return "INVALID";
+        };
+    }
 
     static void read(Status const & status, JsonObject & root) {
         root["activePin"] = status.ActivePin;
@@ -59,7 +59,7 @@ class Status {
         if(activePin < 0) {
             return StateUpdateResult::ERROR;
         }
-        if(status.ActivePin != (unsigned int)activePin) {
+        if(status.ActivePin != activePin) {
             status.ActivePin = activePin;
             result = StateUpdateResult::CHANGED;
         }
@@ -96,7 +96,8 @@ class Status {
 class StatusService : public StatefulService<Status> {
     public:
     StatusService(
-        SecurityManager * securityManager);
+        SecurityManager * securityManager,
+        AsyncWebServer * server);
     void begin();
 
     private:

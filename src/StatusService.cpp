@@ -1,12 +1,13 @@
 #include <StatusService.h>
 
 StatusService::StatusService(
-    SecurityManager * securityManager) :
+    SecurityManager * securityManager,
+    AsyncWebServer * server) :
     webSocket(
         Status::read,
         Status::update,
         this,
-        NULL,
+        server,
         STATUS_WS_PATH,
         securityManager,
         AuthenticationPredicates::IS_AUTHENTICATED)
